@@ -1,4 +1,6 @@
 source("major_calculations.R")
+library("ggplot2")
+library(reshape)
 library(Rsamtools)
 
 shinyServer(function(input, output, session) {
@@ -23,17 +25,45 @@ shinyServer(function(input, output, session) {
     gffInput () 
   })
   poly_a_counts<- reactive({
-    get_a_counts (bam_file_path, gffInput(),input$select_bam_files,input$select_genes)
-    
+    initial_table <- get_a_counts (bam_file_path, gffInput(),input$select_bam_files,
+                                   input$select_genes)
+    subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >= 
+                                            input$ad_slider&
+                                            initial_table$width >=
+                                            input$al_length[1]&
+                                            initial_table$width <=
+                                            input$al_length[2],]
   })
   output$print_poly_a_counts <- renderDataTable({
-    poly_a_counts() 
-    
+    poly_a_counts()    
   })
-  output$scp_plot<- renderPlot({
-    make_plot()
-    
+  output$gene_info <- renderText({
+    full_df <- poly_a_counts()  
+    split_frame <- split(full_df, full_df$sample)
+    names_string (split_frame) 
+})
+  plot_calcs <- reactive({
+    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend)
+  })    
+  output$scp_plot<- renderPlot({  
+      plot_calcs()
   })
+  #Workaround for a shiny bug thatdoesn't handle reactive plots well. 
+  plot_calcs2 <- function(){
+    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend)
+  }
+  output$downloadPlot <- downloadHandler(
+    filename = function(){
+      paste(trim(input$select_genes), '.pdf', sep='')
+    },
+    content = function(file){
+      pdf(file,width = 10)
+      postscript(file)
+      plot_calcs2()     
+      dev.off()
+  
+  })
+    
   output$selected_dataset<- renderText({
     selected_data(input$dataset)
   })
