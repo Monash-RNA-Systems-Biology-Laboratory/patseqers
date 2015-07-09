@@ -6,34 +6,37 @@ shinyUI(fluidPage(
            specific gene or peak, from the selected sample files."), br(),
   
   sidebarPanel(
+    selectInput(inputId = 'dataset','Select Your Dataset', list_datasets()),
+    checkboxInput("compare", label = "Compare Datasets", value = F),
+    conditionalPanel(
+      condition = "input.compare == true",
+      selectInput(inputId = 'dataset2','Select Your Second Dataset', list_datasets())
+    ),      
     textInput("select_genes", label = h5("Select Your 
                                          Favourite Gene(s) or a Peak"),
               value = "Peak1"),
-    selectInput(inputId = 'dataset','Select Your Dataset', list_datasets()),
-    checkboxInput("compare_datasets", "Compare Datasets"),
-    conditionalPanel(
-      condition = "input.compare_datasets == true",
-      selectInput("data_set", "Data Set 2",
-                  list_datasets())
-    ),
     selectInput("gff_select", label = h4("GFF File Selection"), 
                 choices = find_gff_files(gff_file_path), 
                 selected =  find_gff_files(gff_file_path)[1]),
+    checkboxInput("merge", label = "Merge Replicates", value = F),
+    conditionalPanel(
+    condition = "input.merge == false",
     checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
                                                       Bam FIles"),
                        choices = find_bam_files(bam_file_path), 
-                       selected = find_bam_files(bam_file_path)[1]),br(),
+                       selected = find_bam_files(bam_file_path)[1])
+    ),
+    
+    conditionalPanel(
+      condition = "input.merge == true",      
+      lapply(find_bam_files(bam_file_path), function(i) {
+        selectInput(paste0('snumber', i),  h5(paste0('Select a group for ', i)),
+                    choices = 1:5)
+      })
+      ),
     h3("save"),
     downloadButton("downloadPlot", label = "Download Plot"),
-    checkboxInput("merge", label = "Merge Replicates", value = F),
-    conditionalPanel(
-      condition = "input.merge == true",
-      textInput("n_replicates", label = h5("How many replicates do you have?
-                                           Enter an integer or format: 
-                                           1:2 3:5 etc if replicate numbers
-                                           are odd"),
-                   value = 2)
-    ),
+    
     checkboxInput("legend", label = "Display Legend", value = T),
     checkboxInput("gff_info", label = "Display GFF Info", value = F),
     checkboxInput("show_reads", label = "Show Reads", value = F),     
@@ -45,20 +48,22 @@ shinyUI(fluidPage(
                 sep = ","),
     sliderInput("al_length", label= 'alignment length range', min=0, max=300,
                 value =c(0,300))
-
-),
+    
+    ),
   mainPanel(
     h2("Plot Output",  height = "600"),
     plotOutput('scp_plot'),
     em(textOutput("gene_info")),
     textOutput('read_files'),
+    textOutput('groups'),
+    textOutput('n_reps'),
     conditionalPanel(
-    condition = "input.gff_info == true",
-    dataTableOutput("gff_rows")
+      condition = "input.gff_info == true",
+      dataTableOutput("gff_rows")
     ),
     conditionalPanel(
       condition = "input.show_reads == true",
       dataTableOutput('print_poly_a_counts')
     )
   )
-))
+    ))

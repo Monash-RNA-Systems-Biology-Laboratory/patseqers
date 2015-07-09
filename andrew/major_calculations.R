@@ -19,9 +19,13 @@ find_gff_files <- function(file_path) {
   return(gff_files)
 }
 
-make_plot <- function(processed_frame, ranges,names, leg){
-  samples <- split(processed_frame, processed_frame$sample, drop =T)
-  colours <- rainbow(length(samples))
+make_plot <- function(processed_frame, ranges,names, leg,group){
+  if (group == T){
+  samples <- split(processed_frame, processed_frame$group, drop =T)
+  }
+  else {
+    samples <- split(processed_frame, processed_frame$sample, drop =T)    
+  }  
   par(bty="l")
   par(mar=c(5.1,4.1,4.1,8.1), xpd =T)
     
@@ -34,18 +38,24 @@ make_plot <- function(processed_frame, ranges,names, leg){
   
   
   count <- 1
+  
   for (df in samples){
-    
-    ecdf_a <- ecdf(df[,"number_of_as"])
-  print(count)
-    curve((-1*ecdf_a(x)*100)+100, from=ranges[1], to=ranges[2], 
-                   col=colours[count], xlim=ranges, main= paste(names),
-                   add=T)
-    count <- count +1
+   split_peak <- split(df,df$gene_or_peak_name, drop =T)   
+    for(gene_or_peak in split_peak){  
+      print(str(gene_or_peak))
+      colours <- rainbow(length(samples)*length(split_peak))
+      ecdf_a <- ecdf(gene_or_peak[,"number_of_as"])
+      curve((-1*ecdf_a(x)*100)+100, from=ranges[1], to=ranges[2], 
+                     col=colours[count], xlim=ranges, main= paste(names),
+                     add=T)
+      count <- count +1
+      
+      if (leg ==T){ 
+        legend(ranges[2]-40,95 + (length(samples)*5), 
+               legend = paste(names(samples),names(split_peak)), fill = colours, bty ="n")
+    }
   }
-  if (leg ==T){ 
-    legend(ranges[2]-40,95 + (length(samples)*5), 
-           legend =names(samples), fill = colours, bty ="n")
+
   }
 
 }
@@ -79,19 +89,20 @@ filter_gff_for_rows<- function (gff_file,names){
 }
 
 # This function gets the poly (A) counts for all given gff rows
-get_a_counts <- function(bam_file_path,gff_rows, bam_files,names){
+get_a_counts <- function(bam_file_path,gff_rows, bam_files,names, groups){
   reads_report <- data.frame() 
+  split_names <- strsplit(names, " ")
   for (gff_row in 1:nrow(gff_rows)){
     counts_frame <- get_a_counts_gff_row(bam_file_path, gff_rows[gff_row,], 
-                                         bam_files)
-    counts_frame$gene_or_peak_name <- names[gff_row]
-    reads_report <-rbind(reads_report,counts_frame)    
+                                         bam_files, groups)
+    counts_frame$gene_or_peak_name <- split_names[[1]][gff_row]
+    reads_report <-rbind(reads_report,counts_frame)      
   }
   return(reads_report)
 }
 
 
-get_a_counts_gff_row <- function(bam_file_path,peak, bam_files){
+get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
   if (peak[,"Orientation"]== "-"){
     ori <- TRUE    
   }
@@ -99,6 +110,7 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files){
     ori <- FALSE
   }
   bam_frame <- data.frame()
+  count <- 1 
   for (bam_file in bam_files){
     full_file_path <-paste(bam_file_path,bam_file, sep ="")
         
@@ -121,7 +133,9 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files){
                                            peak[,'Peak Start']& 
                                            single_bam_frame$pos <= peak[,'Peak End'] ,]
     single_bam_frame$sample <- paste(bam_file)
+    single_bam_frame$group<- paste("group", groups[count])
     bam_frame <- rbind(bam_frame,single_bam_frame)
+    count <- count +1
     
   }  
   return(bam_frame)
@@ -131,12 +145,22 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files){
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 
-names_string <- function(s_frame){
+names_string <- function(s_frame, groups){
   to_print <- character()
   for (frame in s_frame){
-    str <- paste("The poly (A) read count for ", frame$sample[1]," ",
-                 frame$gene_or_peak_name[1], " is: ",nrow(frame),".", "\n", sep ="")
+    split_peaks <- split(frame ,frame$gene_or_peak_name, drop =T)
+    for (peak_frame in split_peaks){
+        
+      if (groups == T){
+        str <- paste("The poly (A) read count for ", peak_frame$group[1]," ",
+                     peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
+      }
+      else{
+        str <- paste("The poly (A) read count for ", peak_frame$sample[1]," ",
+                     peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
+    }
     to_print <- c(to_print, str)
+    }
   }
   return(to_print)
 }

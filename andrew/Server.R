@@ -24,9 +24,14 @@ shinyServer(function(input, output, session) {
   output$gff_rows<- renderDataTable({
     gffInput () 
   })
+  groupings <-reactive({
+    lapply(find_bam_files(bam_file_path), function(i) input[[paste0('snumber', i)]])    
+  })
+  
   poly_a_counts<- reactive({
+ 
     initial_table <- get_a_counts (bam_file_path, gffInput(),input$select_bam_files,
-                                   input$select_genes)
+                                   input$select_genes,groupings())
     subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >= 
                                             input$ad_slider&
                                             initial_table$width >=
@@ -37,13 +42,17 @@ shinyServer(function(input, output, session) {
   output$print_poly_a_counts <- renderDataTable({
     poly_a_counts()    
   })
+  output$n_reps<- renderText ({
+    input$n_replicates   
+  })
+
   output$gene_info <- renderText({
     full_df <- poly_a_counts()  
     split_frame <- split(full_df, full_df$sample)
-    names_string (split_frame) 
-})
+    names_string (split_frame, input$merge) 
+  })
   plot_calcs <- reactive({
-    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend)
+    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, input$merge)
   })    
   output$scp_plot<- renderPlot({  
       plot_calcs()
