@@ -13,7 +13,8 @@ shinyUI(fluidPage(
       selectInput(inputId = 'dataset2','Select Your Second Dataset', list_datasets())
     ),      
     textInput("select_genes", label = h5("Select Your 
-                                         Favourite Gene(s) or a Peak"),
+                                         Favourite Gene(s) or a Peak(s) 
+                                         Separated by a Space"),
               value = "Peak1"),
     selectInput("gff_select", label = h4("GFF File Selection"), 
                 choices = find_gff_files(gff_file_path), 
@@ -28,11 +29,12 @@ shinyUI(fluidPage(
     ),
     
     conditionalPanel(
-      condition = "input.merge == true",      
-      lapply(find_bam_files(bam_file_path), function(i) {
-        selectInput(paste0('snumber', i),  h5(paste0('Select a group for ', i)),
-                    choices = 1:5)
-      })
+      condition = "input.merge == true",   
+      uiOutput("select_group")
+     # lapply(find_bam_files(bam_file_path), function(i) {
+     # selectInput(paste0('snumber', i),  h5(paste0('Select a group for ', i)),
+      #              choices = 1:5)
+   #   })
       ),
     h3("save"),
     downloadButton("downloadPlot", label = "Download Plot"),
