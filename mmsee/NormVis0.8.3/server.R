@@ -11,17 +11,6 @@ library(plyr)
 
 shinyServer(function(input,output) {
     
-    rdcsv1 <- reactive({
-        
-        orig.df <- 
-        return(orig.df)
-    })
-    
-    rdcsv2 <-  reactive({
-        orig.df <- 
-        return(orig.df)        
-    })
-    
     csvmd <- reactive({
         orig.df <- data.frame(read.csv(file.path(paste0(input$datset),paste0(input$datset,"-count.csv")), header = TRUE))
         name.df <- data.frame(read.csv(file.path(paste0(input$datset),paste0(input$datset,"-info.csv")), header = TRUE))
