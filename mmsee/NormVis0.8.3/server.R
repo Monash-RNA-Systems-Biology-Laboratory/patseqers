@@ -11,9 +11,20 @@ library(plyr)
 
 shinyServer(function(input,output) {
     
-    rdcsv <- reactive({
-        orig.df <- data.frame(read.csv(paste0(input$datset,"-count.csv"), header = TRUE))
-        name.df <- data.frame(read.csv(paste0(input$datset,"-info.csv"), header = TRUE))
+    rdcsv1 <- reactive({
+        
+        orig.df <- 
+        return(orig.df)
+    })
+    
+    rdcsv2 <-  reactive({
+        orig.df <- 
+        return(orig.df)        
+    })
+    
+    csvmd <- reactive({
+        orig.df <- data.frame(read.csv(file.path(paste0(input$datset),paste0(input$datset,"-count.csv")), header = TRUE))
+        name.df <- data.frame(read.csv(file.path(paste0(input$datset),paste0(input$datset,"-info.csv")), header = TRUE))
         
         nameN.df <- data.frame(name.df[,3], name.df[,1])
         colnames(nameN.df) <- c("Gene", "Name")
@@ -34,7 +45,7 @@ shinyServer(function(input,output) {
     })
     
     rdcfg <- reactive({
-        return(cfg.df <- read.csv(paste0(input$datset,"-confg.csv")))
+        return(cfg.df <- read.csv(file.path(paste0(input$datset),paste0(input$datset,"-confg.csv"))))
     })
     
     
@@ -59,7 +70,7 @@ shinyServer(function(input,output) {
     flt <-
         reactive({
             flt.df <-
-                data.frame(rdcsv()[apply(rdcsv(),1,function(row) {
+                data.frame(csvmd()[apply(csvmd(),1,function(row) {
                     any(row >= input$nMin)
                 }),])
         })
