@@ -3,31 +3,42 @@ library("ggplot2")
 library(reshape)
 library(Rsamtools)
 
+
+
 shinyServer(function(input, output, session) {
+
   
   # Combine the selected variables into a new data frame
-  bam_validate <- reactive({ 
-  validate(
-    need(input$select_bam_files != "", "Please select a data set")
-  )
-    get(input$select_bam_files, 'package:datasets')
-  
+  found_gff_files <- reactive({
+    find_gff_files(gff_file_path)
+  })
+  output$gff_files <- renderUI({
+    selectInput("gff_select", label = h4("GFF File Selection"), 
+                choices = found_gff_files(), 
+                selected =  found_gff_files()[1])   
+  })
+  found_bam_files <- reactive({
+    find_bam_files(bam_file_path)
+  })
+  output$bam_files <- renderUI({
+    checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
+                                                      Bam FIles"),
+                       choices = found_bam_files(), 
+                       selected = found_bam_files()[1])   
+  })
+  processed_gff <- reactive({
+    withProgress(message = 'Processing the gff file.',
+                 detail = 'This only happens once', value = 0,{
+      modify_gff_inplace(paste(gff_file_path, input$gff_select,sep=""))
+                 }
+    )
+  })
+  output$gff_check <- renderPrint({
+    cat("The gff file may take a moment to be processed, the plot will appear when finished")
   })
   
-  selectedData <- reactive({
-    input$dataset
-  })
-  number_of_datasets <- reactive({
-    input$dataset
-  })  
-  read_files <- reactive({
-    read_required_files(input$dataset)
-  })
-  dataset1 <- reactive({
-    read_required_files(input$dataset)
-  }) 
   gffInput <- reactive({
-  filter_gff_for_rows(paste(gff_file_path,input$gff_select,sep=""), input$select_genes)
+  filter_gff_for_rows(processed_gff(), input$select_genes)
   })
   output$gff_rows<- renderDataTable({
     gffInput () 
@@ -57,7 +68,6 @@ shinyServer(function(input, output, session) {
  
   
   poly_a_counts<- reactive({
-    print(group_list())
  
     initial_table <- get_a_counts (bam_file_path, gffInput(),input$select_bam_files,
                                    input$select_genes,group_list())
@@ -88,7 +98,7 @@ shinyServer(function(input, output, session) {
   })
   #Workaround for a shiny bug thatdoesn't handle reactive plots well. 
   plot_calcs2 <- function(){
-    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend)
+    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, input$merge)
   }
   output$downloadPlot <- downloadHandler(
     filename = function(){

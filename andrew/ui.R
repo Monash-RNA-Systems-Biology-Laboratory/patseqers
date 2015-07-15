@@ -1,4 +1,10 @@
-shinyUI(fluidPage(
+
+shinyUI(fluidPage(  
+  # Hide all error messages
+  tags$style(type="text/css",
+             ".shiny-output-error { visibility: hidden; }",
+             ".shiny-output-error:before { visibility: hidden; }"
+  ),
   titlePanel("Poly(A) Plotter"),
   em(helpText("created by Andrew Pattison, Jack Xu and Paul Harrison for the Beilharz Lab", align = "right")),
   helpText("
@@ -6,26 +12,22 @@ shinyUI(fluidPage(
            specific gene or peak, from the selected sample files."), br(),
   
   sidebarPanel(
-    selectInput(inputId = 'dataset','Select Your Dataset', list_datasets()),
+    #selectInput(inputId = 'dataset','Select Your Dataset', list_datasets()),
     checkboxInput("compare", label = "Compare Datasets", value = F),
-    conditionalPanel(
-      condition = "input.compare == true",
-      selectInput(inputId = 'dataset2','Select Your Second Dataset', list_datasets())
-    ),      
+   # conditionalPanel(
+    #  condition = "input.compare == true",
+    #  selectInput(inputId = 'dataset2','Select Your Second Dataset', list_datasets())
+    #),      
     textInput("select_genes", label = h5("Select Your 
                                          Favourite Gene(s) or a Peak(s) 
                                          Separated by a Space"),
-              value = "Peak1"),
-    selectInput("gff_select", label = h4("GFF File Selection"), 
-                choices = find_gff_files(gff_file_path), 
-                selected =  find_gff_files(gff_file_path)[1]),
+                                         value = "Peak1"),
+    uiOutput("gff_files"),
     checkboxInput("merge", label = "Merge Replicates", value = F),
     conditionalPanel(
     condition = "input.merge == false",
-    checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
-                                                      Bam FIles"),
-                       choices = find_bam_files(bam_file_path), 
-                       selected = find_bam_files(bam_file_path)[1])
+    uiOutput("bam_files") 
+
     ),
     
     conditionalPanel(
@@ -53,7 +55,7 @@ shinyUI(fluidPage(
     
     ),
   mainPanel(
-    h2("Plot Output",  height = "600"),
+    h2("Plot Output",  height = "600"),   
     plotOutput('scp_plot'),
     em(textOutput("gene_info")),
     textOutput('read_files'),
