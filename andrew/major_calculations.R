@@ -69,7 +69,7 @@ filter_gff_for_rows<- function (gff,names){
     
     for (name in split_names[[1]]){
       index1 <- with(gff, grepl 
-                     (ignore.case = T,paste('=',name,'[;/$]{1}',sep=""), gff[,'Information']))
+                     (ignore.case = T,paste('[=/]{1}',name,'[;/$]{1}',sep=""), gff[,'Information']))
       # Would be nice to find some better regex to get rid of this if statement. 
       # Maybe do this with a GFF parser
       
