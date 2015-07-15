@@ -1,15 +1,12 @@
 source("major_calculations.R")
-library("ggplot2")
-library(reshape)
-library(Rsamtools)
-
-
+library("Rsamtools")
+library("extrafont")
 
 shinyServer(function(input, output, session) {
-  output$gff_file_path <- renderUI({
+  output$select_file_path <- renderUI({
     selectInput("file_path", label = h4("Select a dataset"), 
-                choices = list.files(), 
-                selected =  list.files()[1])   
+                choices = list.dirs(full.names=F, recursive =F), 
+                selected =  list.dirs(full.names=F, recursive =F)[5])   
   })
   
   found_gff_files <- reactive({
@@ -21,7 +18,7 @@ shinyServer(function(input, output, session) {
                 selected =  found_gff_files()[1])   
   })
   found_bam_files <- reactive({
-    find_bam_files(paste0("./", input$file_path))
+    find_bam_files(paste0("./", input$file_path, "/"))
   })
   output$bam_files <- renderUI({
     checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
@@ -30,7 +27,7 @@ shinyServer(function(input, output, session) {
                        selected = found_bam_files()[1])   
   })
   processed_gff <- reactive({
-    withProgress(message = 'Processing the gff file.',
+    withProgress(message = 'Processing the gff file, this may take a few seconds.',
                  detail = 'This only happens once.', value = 0,{
       modify_gff_inplace(paste("./", input$file_path,"/", input$gff_select,sep=""))
                  }
@@ -106,10 +103,10 @@ shinyServer(function(input, output, session) {
       paste(trim(input$select_genes), '.eps', sep='')
     },
     content = function(file){
-      setEPS(file,width = 10)
+      setEPS(width = 10, family = "Liberation Sans")
       postscript(file)
       plot_calcs2()     
-      dev.off()
+      dev.off() 
   
   })
 

@@ -12,17 +12,17 @@ shinyUI(fluidPage(
            specific gene or peak, from the selected sample files."), br(),
   
   sidebarPanel(
-    #selectInput(inputId = 'dataset','Select Your Dataset', list_datasets()),
-    #checkboxInput("compare", label = "Compare Datasets", value = F),
+  
+    uiOutput("select_file_path"),
+   # checkboxInput("data_set_2", label = "Compare Datasets", value = F),
    # conditionalPanel(
-    #  condition = "input.compare == true",
-    #  selectInput(inputId = 'dataset2','Select Your Second Dataset', list_datasets())
-    #),   
-    uiOutput("gff_file_path"),
+   #   condition = "input.data_set_2 == true",   
+   #   uiOutput("select_file_path_2")
+  #  ),
     textInput("select_genes", label = h5("Select Your 
                                          Favourite Gene(s) or a Peak(s) 
                                          Separated by a Space"),
-                                         value = "Peak1"),
+                                         value = "Peak1873"),
     uiOutput("gff_files"),
     checkboxInput("merge", label = "Merge Replicates", value = F),
     conditionalPanel(
@@ -34,10 +34,6 @@ shinyUI(fluidPage(
     conditionalPanel(
       condition = "input.merge == true",   
       uiOutput("select_group")
-     # lapply(find_bam_files(bam_file_path), function(i) {
-     # selectInput(paste0('snumber', i),  h5(paste0('Select a group for ', i)),
-      #              choices = 1:5)
-   #   })
       ),
     h3("save"),
     downloadButton("downloadPlot", label = "Download Plot"),

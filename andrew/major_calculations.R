@@ -1,8 +1,3 @@
-#List all datasets inside a directories with "SHINY" in the name. 
-
-list_datasets <- function(){
-  return(c("Yeast", "Cancer"))
-}
 
 # Returns a list of bam files from the nominated directory
 find_bam_files <- function(file_path) {
@@ -114,7 +109,7 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
   bam_frame <- data.frame()
   count <- 1 
   for (bam_file in bam_files){
-    full_file_path <-paste(bam_file_path,bam_file, sep ="")
+    full_file_path <-paste(bam_file_path,"/", bam_file, sep ="")
         
     param <- ScanBamParam(what=c('qname','pos','qwidth','strand'),
                           tag=c('AN','AD'),flag=scanBamFlag(isMinusStrand=ori) , 
