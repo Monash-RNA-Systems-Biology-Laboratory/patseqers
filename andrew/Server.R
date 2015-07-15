@@ -6,11 +6,14 @@ library(Rsamtools)
 
 
 shinyServer(function(input, output, session) {
-
+  output$gff_file_path <- renderUI({
+    selectInput("file_path", label = h4("Select a dataset"), 
+                choices = list.files(), 
+                selected =  list.files()[1])   
+  })
   
-  # Combine the selected variables into a new data frame
   found_gff_files <- reactive({
-    find_gff_files(gff_file_path)
+    find_gff_files(paste0("./", input$file_path))
   })
   output$gff_files <- renderUI({
     selectInput("gff_select", label = h4("GFF File Selection"), 
@@ -18,7 +21,7 @@ shinyServer(function(input, output, session) {
                 selected =  found_gff_files()[1])   
   })
   found_bam_files <- reactive({
-    find_bam_files(bam_file_path)
+    find_bam_files(paste0("./", input$file_path))
   })
   output$bam_files <- renderUI({
     checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
@@ -28,8 +31,8 @@ shinyServer(function(input, output, session) {
   })
   processed_gff <- reactive({
     withProgress(message = 'Processing the gff file.',
-                 detail = 'This only happens once', value = 0,{
-      modify_gff_inplace(paste(gff_file_path, input$gff_select,sep=""))
+                 detail = 'This only happens once.', value = 0,{
+      modify_gff_inplace(paste("./", input$file_path,"/", input$gff_select,sep=""))
                  }
     )
   })
@@ -46,8 +49,7 @@ shinyServer(function(input, output, session) {
 
     select_group_fun <- reactive({
       count <- 1
-      lapply(find_bam_files(bam_file_path)
-        [1:length(input$select_bam_files)], 
+      lapply(input$select_bam_files, 
         function(i) {          
             selectInput(paste0('snumber', i),              
             h5(paste0('Select a group for ', i)),
@@ -59,8 +61,7 @@ shinyServer(function(input, output, session) {
    select_group_fun()
   })    
  group_list <- reactive({
-   res <- lapply(find_bam_files(bam_file_path)
-                 [1:length(input$select_bam_files)], 
+   res <- lapply(input$select_bam_files, 
                  function(i) { 
                    input[[paste0('snumber', i)]]
                  })
@@ -69,7 +70,7 @@ shinyServer(function(input, output, session) {
   
   poly_a_counts<- reactive({
  
-    initial_table <- get_a_counts (bam_file_path, gffInput(),input$select_bam_files,
+    initial_table <- get_a_counts (input$file_path, gffInput(),input$select_bam_files,
                                    input$select_genes,group_list())
     subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >= 
                                             input$ad_slider&
@@ -102,10 +103,10 @@ shinyServer(function(input, output, session) {
   }
   output$downloadPlot <- downloadHandler(
     filename = function(){
-      paste(trim(input$select_genes), '.pdf', sep='')
+      paste(trim(input$select_genes), '.eps', sep='')
     },
     content = function(file){
-      pdf(file,width = 10)
+      setEPS(file,width = 10)
       postscript(file)
       plot_calcs2()     
       dev.off()

@@ -1,7 +1,3 @@
-#File paths in place for when Michael directs me. 
-gff_file_path <- "/home/bigpatto2/Bioinformatics/SCP_2.0/SHINY_yeast_test/"
-bam_file_path <- "/home/bigpatto2/Bioinformatics/SCP_2.0/SHINY_yeast_test/"
-
 #List all datasets inside a directories with "SHINY" in the name. 
 
 list_datasets <- function(){
@@ -10,7 +6,9 @@ list_datasets <- function(){
 
 # Returns a list of bam files from the nominated directory
 find_bam_files <- function(file_path) {
+  print(file_path)
   bam_files <- list.files(paste (file_path), pattern = '*.bam$')
+  print(bam_files)
   return(bam_files)
 }
 # Returns a list of gff files from the nominated directory
@@ -173,7 +171,7 @@ names_string <- function(s_frame, groups){
   return(to_print)
 }
 modify_gff_inplace <- function (gff_file) {
-  
+
   start_gff_file <- read.delim(gff_file, header=FALSE,
                                comment.char="",stringsAsFactors=F)
   start_gff_file<- start_gff_file[-1,]

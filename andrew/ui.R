@@ -13,11 +13,12 @@ shinyUI(fluidPage(
   
   sidebarPanel(
     #selectInput(inputId = 'dataset','Select Your Dataset', list_datasets()),
-    checkboxInput("compare", label = "Compare Datasets", value = F),
+    #checkboxInput("compare", label = "Compare Datasets", value = F),
    # conditionalPanel(
     #  condition = "input.compare == true",
     #  selectInput(inputId = 'dataset2','Select Your Second Dataset', list_datasets())
-    #),      
+    #),   
+    uiOutput("gff_file_path"),
     textInput("select_genes", label = h5("Select Your 
                                          Favourite Gene(s) or a Peak(s) 
                                          Separated by a Space"),
