@@ -12,49 +12,78 @@ find_gff_files <- function(file_path) {
   return(gff_files)
 }
 
-make_plot <- function(processed_frame, ranges,names, leg,group){
+make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_alt){
+  if(order_alt==T){
+    new_frame <- processed_frame[
+      with(processed_frame,order(
+        width, number_of_as)
+      ),
+      ]
+  }
+ else{
+    new_frame <- processed_frame
+  }
   if (group == T){
-  samples <- split(processed_frame, processed_frame$group, drop =T)
+  samples <- split(new_frame, new_frame$group, drop =T)
   }
   else {
-    samples <- split(processed_frame, processed_frame$sample, drop =T)    
+    samples <- split(new_frame, new_frame$sample, drop =T)    
   }  
   par(bty="l")
   par(mar=c(5.1,4.1,4.1,8.1), xpd =T)
+  if(alt_plot){
+    sample <- samples[1]
     
-  dummy_ecdf <- ecdf(1:10)
-  curve((-1*dummy_ecdf(x)*100)+100, from=ranges[1], to=ranges[2], 
-        col="white", xlim=ranges, main= paste(names),
-        axes=F, xlab= 'Poly (A)-Tail Length', ylab = 'Percent Population (%)', ylim =c(0,100))
-  axis(1, pos=0, tick = 25)
-  axis(2, pos= 0, at= c(0,25,50,75,100), tick = 25)
-  
-  
-  count <- 1
-  
-  
-  for (df in samples){
-   split_peak <- split(df,df$gene_or_peak_name, drop =T)    
-   for(gene_or_peak in split_peak){  
-      colours <- rainbow(length(samples)*length(split_peak))
-      ecdf_a <- ecdf(gene_or_peak[,"number_of_as"])
-      curve((-1*ecdf_a(x)*100)+100, from=ranges[1], to=ranges[2], 
-                     col=colours[count], xlim=ranges, main= paste(names),
-                     add=T)
-      count <- count +1     
-        
-  }
-  
-  }
-  leg_names <- list()
-  for (name in names(samples)){
-    leg_names <-c(leg_names, paste(name, names(split_peak)))
+    points <- lapply(sample,function(x){data.frame(x$width, x$number_of_as)})
+    points <- points[[1]]
+    str(points)
+    ymax <- nrow(points)
+ 
+    plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = "Sorted Read Number")   
+    for (i in 1:ymax){
+      segments(x0= 0, y0= i,x1= points[i,1], col="purple")
+      segments(x0= points[i,1], y0= i,x1= points[i,1] +points[i,2] , col="pink")
+      
+    }
     
   }
-  
-  if (leg ==T){ 
-    legend(ranges[2]-40,95 + (length(samples)*5), 
-           legend = leg_names, fill = colours, bty ="n")
+    else{
+      
+    
+    dummy_ecdf <- ecdf(1:10)
+    curve((-1*dummy_ecdf(x)*100)+100, from=ranges[1], to=ranges[2], 
+          col="white", xlim=ranges, main= paste(names),
+          axes=F, xlab= 'Poly (A)-Tail Length', ylab = 'Percent Population (%)', ylim =c(0,100))
+    axis(1, pos=0, tick = 25)
+    axis(2, pos= 0, at= c(0,25,50,75,100), tick = 25)
+    
+    
+    count <- 1
+    
+    
+    for (df in samples){
+     split_peak <- split(df,df$gene_or_peak_name, drop =T)    
+     for(gene_or_peak in split_peak){  
+        colours <- rainbow(length(samples)*length(split_peak))
+        ecdf_a <- ecdf(gene_or_peak[,"number_of_as"])
+        curve((-1*ecdf_a(x)*100)+100, from=ranges[1], to=ranges[2], 
+                       col=colours[count], xlim=ranges, main= paste(names),
+                       add=T)
+        count <- count +1     
+          
+    }
+    
+    }
+    leg_names <- list()
+    for (name in names(samples)){
+      leg_names <-c(leg_names, paste(name, names(split_peak)))
+      
+    }
+    
+    if (leg ==T){ 
+      legend(ranges[2]-40,95 + (length(samples)*5), 
+             legend = leg_names, fill = colours, bty ="n")
+    }
   }
 
 }
@@ -69,7 +98,7 @@ filter_gff_for_rows<- function (gff,names){
     
     for (name in split_names[[1]]){
       index1 <- with(gff, grepl 
-                     (ignore.case = T,paste('[=/]{1}',name,'[;/$]{1}',sep=""), gff[,'Information']))
+                     (ignore.case = T,paste('[=/]{1}',name,'[;/]',sep=""), gff[,'Information']))
       # Would be nice to find some better regex to get rid of this if statement. 
       # Maybe do this with a GFF parser
       
@@ -177,7 +206,7 @@ modify_gff_inplace <- function (gff_file) {
     with(start_gff_file,order(
       Chromosome,Orientation,Peak_Start)
     ),
-    ]
+  ]
   for (row in 1:nrow(new_frame)){
     
     if (new_frame[row,'Orientation'] == '+'){
@@ -187,8 +216,8 @@ modify_gff_inplace <- function (gff_file) {
             new_frame[row-1,'Peak_End']&
             new_frame[row,'Chromosome'] ==
             new_frame[row-1,'Chromosome']){
-        new_frame[row,'Peak_Start'] <- 
-          new_frame[row-1,'Peak_End']+1          
+              new_frame[row,'Peak_Start'] <- 
+              new_frame[row-1,'Peak_End']+1          
       }
     }
     else{
@@ -196,11 +225,11 @@ modify_gff_inplace <- function (gff_file) {
             new_frame[row+1,'Peak_Start']&
             new_frame[row, 'Chromosome'] ==
             new_frame[row+1,'Chromosome']){
-        new_frame[row,'Peak_End'] <- 
-          new_frame[row+1,'Peak_Start']-1          
+              new_frame[row,'Peak_End'] <- 
+              new_frame[row+1,'Peak_Start']-1          
       }
       new_frame[row,c('Peak_End', 'Peak_Start')] <- 
-        new_frame[row,c('Peak_End', 'Peak_Start')]-10
+      new_frame[row,c('Peak_End', 'Peak_Start')]-10
     }
   }
   return(new_frame)

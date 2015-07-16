@@ -24,6 +24,12 @@ shinyUI(fluidPage(
                                          Separated by a Space"),
                                          value = "Peak1873"),
     uiOutput("gff_files"),
+    checkboxInput("alt_plot", label = "Poly (A) Pileup", value = T),
+    conditionalPanel(
+      condition = "input.alt_plot == true",
+      checkboxInput("order_alt", label = "Order Reads By Width and then Poly (A) Tail Length", value = T) 
+      
+    ),
     checkboxInput("merge", label = "Merge Replicates", value = F),
     conditionalPanel(
     condition = "input.merge == false",
@@ -42,7 +48,7 @@ shinyUI(fluidPage(
     checkboxInput("gff_info", label = "Display GFF Info", value = F),
     checkboxInput("show_reads", label = "Show Reads", value = F),     
     sliderInput("xslider", label= 'x axis slider', min=0, max=400,
-                value =c(0, 150), step = 25,ticks = TRUE, 
+                value =c(0, 300), step = 25,ticks = TRUE, 
                 sep = ","),
     sliderInput("ad_slider", label= 'number of adapter bases', min=0, max=23,
                 value =0, step = 1,ticks = TRUE, 

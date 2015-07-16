@@ -1,6 +1,7 @@
 source("major_calculations.R")
 library("Rsamtools")
 library("extrafont")
+library("jsonlite")
 
 shinyServer(function(input, output, session) {
   output$select_file_path <- renderUI({
@@ -89,14 +90,16 @@ shinyServer(function(input, output, session) {
     names_string (split_frame, input$merge) 
   })
   plot_calcs <- reactive({
-    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, input$merge)
+    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, 
+              input$merge, input$alt_plot, input$order_alt)
   })    
   output$scp_plot<- renderPlot({  
       plot_calcs()
   })
   #Workaround for a shiny bug thatdoesn't handle reactive plots well. 
   plot_calcs2 <- function(){
-    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, input$merge)
+    make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, 
+              input$merge, input$alt_plot, input$order_alt)
   }
   output$downloadPlot <- downloadHandler(
     filename = function(){
