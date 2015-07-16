@@ -2,95 +2,157 @@ library(shiny)
 library(ggplot2)
 library(biomaRt)
 
-# raw_gene_exp<-read.csv("genewise-count.csv")
-# df_rawgene_exp<-data.frame(raw_gene_exp,  stringsAsFactors = T)
-# df3<-df_rawgene_exp[,-1]
-# rownames(df3)<-df_rawgene_exp[,1]
 
-# gene_nwr<-colnames(df1)
-# gene_n<-list()
-# for(i in gene_nwr){
-#   gen<-substr(i,0,nchar(i)-5)
-#   if((gen %in% gene_n)==FALSE)
-#     gene_n[length(gene_n)+1]<-gen
-# }
-# 
-# for(a in gene_n){
-#   var1<-paste0(a,".rep1")
-#   print(var1)
-#   var2<-paste0(a,".rep2")
-#   m<-paste(a,"mean")
-#   df1[,m]<-((df1[,var1]+df1[,var2])/2)
-# }
-
-
-# df.log<-log2(df3[,]+1)
-# df1<-df.log
-
-shinyServer(function(input, output,session){
-    selectionX<-reactive({
-      return(input$sampleX)
-    })
-    
-    selectionY<-reactive({
-      return(input$sampleY)
-    })
-    
-   GOt<-reactive({
-      return(input$GOterm)
-    })
+shinyServer(function(input,output,session){
+  #make inputs reactive
+  selectionX<-reactive({
+    return(input$sampleX)
+  })
+  
+  selectionY<-reactive({
+    return(input$sampleY)
+  })
+  
+  GOt<-reactive({
+    return(input$GOterm)
+  })
+  
+  productt<-reactive({
+    return(input$productterm)
+  })
   
   searchterm<-reactive({
     return(input$bygene)
   })
-    
-  output$distPlot <- renderPlot({
-      ensembl = useMart("ensembl",dataset="scerevisiae_gene_ensembl")
-      selX<-selectionX()
-      selY<-selectionY()
-      
-#       if(grepl("mean",selX))
-#         selX<-substr(selX,1,nchar(selX)-5)
-#   
-#       if(grepl("mean",selY))
-#         selY<-substr(selY,1,nchar(selY)-5)
-#       
   
-      GO_data<-function(GOterm){
-        GO_t<-GOterm
-        genes<-getBM(attributes = c("ensembl_gene_id") , filters = c("go_id"), values = "GO:0005634" , mart = ensembl)
-        df<-data.frame(genes,selectionX=0,selectionY=0, GO_t,row.names=1)
-        colnames(df)<-c(selX,selY,"ID")
-        
+  dataframx<-reactive({
+    return(input$dataframx)
+  })
+  
+  dataframy<-reactive({
+    return(input$dataframy)
+  })
+  
+  #Plots
+  output$distPlot <- renderPlot({
+    
+    df1<-genewise_exp
+    dafx<-dataframx()
+    dafy<-dataframy()
+    selX<-selectionX()
+    selY<-selectionY()
+    dfx<-get(dafx)
+    dfy<-get(dafy)
+    
+    GO_data<-function(GOterm){
+      genes<-get_genes_GO(GOterm)
+      df<-data.frame(genes,selectionX=0,selectionY=0, GOterm,row.names=1)
+      colnames(df)<-c(selX,selY,"ID")
+      
+      #with isoforms
+      if(input$isoforms){
         for(gene in rownames(df)){
-          if ((gene %in% rownames(df1))){
-            df[gene,selX]<- df1[gene,selX]
-            df[gene,selY]<- df1[gene,selY]
+          for(i in rownames(dfx)){
+            if(grepl(gene,i)){
+              if(i %in% rownames(dfy)){
+                print(i)
+                df[i,1]<- dfx[i,selX]
+                df[i,2]<- dfy[i,selY]
+                df[i,3]<-GOterm
+              }
+            }
+          }}}
+      
+      else{
+        #without isoforms       
+        for(gene in rownames(df)){
+          if ((gene %in% rownames(dfx))){
+            if ((gene %in% rownames(dfy))){
+              df[gene,1]<- dfx[gene,selX]
+              df[gene,2]<- dfy[gene,selY]
+            }
+          }
+        }}
+      return(df)
+    }
+    
+    product_data<-function(keyterm){
+      genes<-get_genes(keyterm,df_info,"product")
+      df<-data.frame(genes,selectionX=0,selectionY=0, keyterm,row.names=1)
+      colnames(df)<-c(selX,selY,"key")
+      
+      for(gene in rownames(df)){
+        if ((gene %in% rownames(dfx))){
+          if ((gene %in% rownames(dfy))){
+            df[gene,1]<- dfx[gene,selX]
+            df[gene,2]<- dfy[gene,selY]
           }
         }
-        return(df)
       }
-      
-      
-    plot_out<-ggplot(df1,aes_string(x=selX,y=selY))+geom_point()
+      return(df)
+    }
+    
+    #xmax
+    xmax<-max(dfx[selX],na.rm = T)
+    #ymax
+    ymax<-max(dfy[selY],na.rm = T)
+    
+    plot_out<-ggplot(df1,aes_string(x=dfx[selX],y=dfy[selY]))+geom_point()
+    plot_out<-plot_out+labs(x=paste(dafx,selX),y=paste(dafy,selY))
+    plot_out<-plot_out+geom_segment(aes_string(x=0,y=0,xend=xmax,yend=ymax),colour="blue",size=1.7)
     
     Gts<-GOt()
-      
-     if(Gts!="None"){
-      GO_terms<-strsplit(Gts,",")
+    
+    #plot GO term(s)
+    if(Gts!=""){
+      GO_terms<-strsplit(Gts,",")[[1]]
       for(GO_ID in GO_terms){
         df2<-GO_data(GO_ID)
-        plot_out<-plot_out+geom_point(data=df2, aes_string(x=selX,y=selY,colour="ID"))
+        plot_out<-plot_out+geom_point(data=df2, aes_string(x=df2[1],y=df2[2],colour="ID"))
       }
-      }
-      
-      #one gene
-      gene1<-searchterm()
-      data1<-df1[gene1,]
-      plot_out<-plot_out+geom_point(data=data1,aes_string(x=selX,y=selY),colour="yellow", size=3.0)
-      
-      
-      plot(plot_out)
-    })
+    }
     
+    #plot by product description key term(s)
+    pterm<-productt()
+    if(pterm!=""){
+      p_terms<-strsplit(pterm,",")[[1]]
+      for(pm in p_terms){
+        df5<-product_data(pm)
+        plot_out<-plot_out+geom_point(data=df5, aes_string(x=df5[1],y=df5[2],colour="key"))
+      }
+    }
+    
+    #plot by gene/gene family
+    gene1<-searchterm()
+    if(gene1!=""){
+      genes1<-get_genes(gene1,df_info,"gene")
+      dfz<-data.frame(genes1,xax=0,yax=0,row.names=genes1)
+      for(gene in genes1){
+        dfz[gene,"xax"]<-dfx[gene,selX]
+        dfz[gene,"yax"]<-dfy[gene,selY]
+      }
+      plot_out<-plot_out+geom_point(data=dfz,aes_string(x="xax",y="yax"),colour="yellow", size=3.0)
+      
+    }
+    
+    
+    plot(plot_out)
+  })
+  
+  #download plot
+  output$downloadPlot<-downloadHandler(
+    filename = function(){
+      "file.pdf"
+    },
+    
+    content = function(file){
+      ggsave(file)
+    }
+  )
+  
 })
+
+
+
+
+
