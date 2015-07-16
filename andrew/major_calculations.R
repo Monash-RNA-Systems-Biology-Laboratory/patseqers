@@ -16,7 +16,7 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
   if(order_alt==T){
     new_frame <- processed_frame[
       with(processed_frame,order(
-        width, number_of_as)
+        -width, -number_of_as)
       ),
       ]
   }
@@ -29,8 +29,7 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
   else {
     samples <- split(new_frame, new_frame$sample, drop =T)    
   }  
-  par(bty="l")
-  par(mar=c(5.1,4.1,4.1,8.1), xpd =T)
+  par(bty="l", ps = 10, mar=c(5.1,4.1,4.1,8.1), xpd =T)
   if(alt_plot){
     sample <- samples[1]
     
