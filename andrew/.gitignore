@@ -1,0 +1,10 @@
+*.pdf
+*.eps
+*.RData
+*.Rhistory
+*.R
+!Server.R
+!major_calculations.R
+!ui.R
+*/
+
