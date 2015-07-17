@@ -1,9 +1,7 @@
 
 # Returns a list of bam files from the nominated directory
 find_bam_files <- function(file_path) {
-  print(file_path)
   bam_files <- list.files(paste (file_path), pattern = '*.bam$')
-  print(bam_files)
   return(bam_files)
 }
 # Returns a list of gff files from the nominated directory
@@ -19,12 +17,14 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
         -width, -number_of_as)
       ),
       ]
+    ylab <- "Sorted Read Number"
   }
- else{
+  else{
     new_frame <- processed_frame
+    ylab <- "Read Number"
   }
   if (group == T){
-  samples <- split(new_frame, new_frame$group, drop =T)
+    samples <- split(new_frame, new_frame$group, drop =T)
   }
   else {
     samples <- split(new_frame, new_frame$sample, drop =T)    
@@ -35,10 +35,9 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
     
     points <- lapply(sample,function(x){data.frame(x$width, x$number_of_as)})
     points <- points[[1]]
-    str(points)
     ymax <- nrow(points)
- 
-    plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = "Sorted Read Number")   
+    
+    plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab)   
     for (i in 1:ymax){
       segments(x0= 0, y0= i,x1= points[i,1], col="purple")
       segments(x0= points[i,1], y0= i,x1= points[i,1] +points[i,2] , col="pink")
@@ -46,8 +45,8 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
     }
     
   }
-    else{
-      
+  else{
+    
     
     dummy_ecdf <- ecdf(1:10)
     curve((-1*dummy_ecdf(x)*100)+100, from=ranges[1], to=ranges[2], 
@@ -61,17 +60,17 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
     
     
     for (df in samples){
-     split_peak <- split(df,df$gene_or_peak_name, drop =T)    
-     for(gene_or_peak in split_peak){  
+      split_peak <- split(df,df$gene_or_peak_name, drop =T)    
+      for(gene_or_peak in split_peak){  
         colours <- rainbow(length(samples)*length(split_peak))
         ecdf_a <- ecdf(gene_or_peak[,"number_of_as"])
         curve((-1*ecdf_a(x)*100)+100, from=ranges[1], to=ranges[2], 
-                       col=colours[count], xlim=ranges, main= paste(names),
-                       add=T)
+              col=colours[count], xlim=ranges, main= paste(names),
+              add=T)
         count <- count +1     
-          
-    }
-    
+        
+      }
+      
     }
     leg_names <- list()
     for (name in names(samples)){
@@ -84,7 +83,7 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
              legend = leg_names, fill = colours, bty ="n")
     }
   }
-
+  
 }
 
 selected_data<- function (data){
@@ -92,24 +91,24 @@ selected_data<- function (data){
 }
 # Outpus the rows matching the input gene or peak name   
 filter_gff_for_rows<- function (gff,names){
-    split_names <- strsplit(names, split = " ")
-    empty <- data.frame()
+  split_names <- strsplit(names, split = " ")
+  empty <- data.frame()
+  
+  for (name in split_names[[1]]){
+    index1 <- with(gff, grepl 
+                   (ignore.case = T,paste('[=/]{1}',name,'[;/]',sep=""), gff[,'Information']))
+    # Would be nice to find some better regex to get rid of this if statement. 
+    # Maybe do this with a GFF parser
     
-    for (name in split_names[[1]]){
+    if (sum(index1)==0){
       index1 <- with(gff, grepl 
-                     (ignore.case = T,paste('[=/]{1}',name,'[;/]',sep=""), gff[,'Information']))
-      # Would be nice to find some better regex to get rid of this if statement. 
-      # Maybe do this with a GFF parser
-      
-      if (sum(index1)==0){
-        index1 <- with(gff, grepl 
-                       (ignore.case = T,paste('=',name,'$',sep=""), gff[,'Information']))
-      }
-      
-      output <-gff[index1, ] 
-      empty <- rbind(empty, output)
+                     (ignore.case = T,paste('=',name,'$',sep=""), gff[,'Information']))
     }
-    return(empty)
+    
+    output <-gff[index1, ] 
+    empty <- rbind(empty, output)
+  }
+  return(empty)
 }
 
 # This function gets the poly (A) counts for all given gff rows
@@ -138,11 +137,11 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
   count <- 1 
   for (bam_file in bam_files){
     full_file_path <-paste(bam_file_path,"/", bam_file, sep ="")
-        
+    
     param <- ScanBamParam(what=c('qname','pos','qwidth','strand'),
                           tag=c('AN','AD'),flag=scanBamFlag(isMinusStrand=ori) , 
                           which=GRanges(peak [,'Chromosome'],IRanges(
-                          peak[,'Peak_Start'], peak[,'Peak_End'] )))
+                            peak[,'Peak_Start'], peak[,'Peak_End'] )))
     #Grabs reads overlapping the range specified by the gff row
     result <- scanBam (full_file_path , param = param, isMinusStrand = ori)
     # A check to make sure the adapter bases column is present. 
@@ -179,7 +178,7 @@ names_string <- function(s_frame, groups){
   for (frame in s_frame){
     split_peaks <- split(frame ,frame$gene_or_peak_name, drop =T)
     for (peak_frame in split_peaks){
-        
+      
       if (groups == T){
         str <- paste("The poly (A) read count for ", peak_frame$group[1]," ",
                      peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
@@ -187,14 +186,14 @@ names_string <- function(s_frame, groups){
       else{
         str <- paste("The poly (A) read count for ", peak_frame$sample[1]," ",
                      peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
-    }
-    to_print <- c(to_print, str)
+      }
+      to_print <- c(to_print, str)
     }
   }
   return(to_print)
 }
 modify_gff_inplace <- function (gff_file) {
-
+  
   start_gff_file <- read.delim(gff_file, header=FALSE,
                                comment.char="",stringsAsFactors=F)
   start_gff_file<- start_gff_file[-1,]
@@ -205,9 +204,20 @@ modify_gff_inplace <- function (gff_file) {
     with(start_gff_file,order(
       Chromosome,Orientation,Peak_Start)
     ),
-  ]
+    ]
+  count <- 0
   for (row in 1:nrow(new_frame)){
-    
+    if (row != nrow(new_frame)){
+      
+      if (new_frame[row,'Peak_End'] <
+            new_frame[row+1,'Peak_Start']&
+            new_frame[row,'Chromosome'] ==
+            new_frame[row+1,'Chromosome']){
+        count <- count +1
+        print('skipped')
+        next
+      }
+    }    
     if (new_frame[row,'Orientation'] == '+'){
       new_frame[row,c('Peak_End', 'Peak_Start')] <- 
         new_frame[row,c('Peak_End', 'Peak_Start')]+10
@@ -215,8 +225,9 @@ modify_gff_inplace <- function (gff_file) {
             new_frame[row-1,'Peak_End']&
             new_frame[row,'Chromosome'] ==
             new_frame[row-1,'Chromosome']){
-              new_frame[row,'Peak_Start'] <- 
-              new_frame[row-1,'Peak_End']+1          
+        new_frame[row,'Peak_Start'] <- 
+          new_frame[row-1,'Peak_End']+1 
+        print('sub made')
       }
     }
     else{
@@ -224,12 +235,14 @@ modify_gff_inplace <- function (gff_file) {
             new_frame[row+1,'Peak_Start']&
             new_frame[row, 'Chromosome'] ==
             new_frame[row+1,'Chromosome']){
-              new_frame[row,'Peak_End'] <- 
-              new_frame[row+1,'Peak_Start']-1          
+        new_frame[row,'Peak_End'] <- 
+          new_frame[row+1,'Peak_Start']-1 
+        print('sub made')
       }
       new_frame[row,c('Peak_End', 'Peak_Start')] <- 
-      new_frame[row,c('Peak_End', 'Peak_Start')]-10
+        new_frame[row,c('Peak_End', 'Peak_Start')]-10
     }
   }
+
   return(new_frame)
 }
