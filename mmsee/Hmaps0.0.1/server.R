@@ -1,6 +1,6 @@
 #Server.R
 #Authors - Michael See
-#        - Paul Harrison
+
 library(shiny)
 library(limma)
 library(edgeR)
@@ -10,7 +10,7 @@ library(DT)
 source("help.R")
 
 shinyServer(function(input,output) {
-    
+    xy <- data.frame()
     output$selDataSet <- renderUI({        
         sets.df <- read.csv("setname.csv", header=T)
         sets.df <- data.frame(lapply(sets.df, as.character), stringsAsFactors=F)
@@ -28,7 +28,11 @@ shinyServer(function(input,output) {
     
     output$selCol <- renderUI({
         name.l <- colnames(x1())
-        selectizeInput("col2Disp", "Select", choices = name.l, multiple = T, selected=NULL)
+        selectizeInput("col2Disp", "Select a column to not display", choices = name.l, multiple = T, selected=NULL)
+    })
+    output$selCol1 <- renderUI({
+        name.l <- colnames(x1())
+        selectizeInput("col2Disp1", "Select a column to not display", choices = name.l, multiple = T, selected=NULL)
     })
     
     x1 <- reactive({
@@ -87,16 +91,18 @@ shinyServer(function(input,output) {
         
         return(flt.df)
     })
-#     output$plotui <- renderUI({
-#         plotOutput("plot1", width="1400", height="850",
-#                    
+    output$plotui <- renderUI({
+        input$gopt
+        plotOutput("plot1", width=isolate(input$pwidth), height=isolate(input$pheight)
+                   
 #                    brush = brushOpts(
 #                        id = "plot_brush",                       
 #                        direction = 'y',#input$brush_dir,
-#                        resetOnNew = T
-#                    )
-#         )
-#     })
+#                        resetOnNew = F
+#                   )
+        
+        )
+    })
     mrg <- reactive({
         x2 <- flt()
         x2 <- DGEList(x2)
@@ -111,12 +117,16 @@ shinyServer(function(input,output) {
     })
     
     
-    pMake <- reactive({       
+    pMake <- function()({
+        
         x2 <- flt()
         x2 <- DGEList(x2)
         x2 <- calcNormFactors(x2)
         x2 <- data.frame(cpm(x2, log=T, prior.count=priorC()))
         if(length(input$col2Disp==0)){
+            x2 <- x2[,-which(names(x2) %in% input$col2Disp)]
+        }
+        if(length(input$col2Disp1==0)){
             x2 <- x2[,-which(names(x2) %in% input$col2Disp)]
         }
         x2$Name <- rownames(x2)
@@ -138,12 +148,21 @@ shinyServer(function(input,output) {
             xy.ls$E <- xy.ls$E[input$datab_rows_selected,]
             xy.elist <- new("EList", xy.ls)
         }
-        a <- t1("prefix", xy.elist, min.span=spanN())
-        return(a)
+        
+        #t1 now returns a dataframe which is set to xy, but this is not currently used
+        xy <<- t1("prefix", xy.elist, min.span=spanN()) 
+            
     })
     
+    pht <- reactive({
+        return(input$pheight)
+    })
+    pwt <- reactive({
+        return(input$pwidth)
+    })
     
     output$plot1 <- renderPlot({
+
         a <- pMake()
         return(a)
     })
@@ -160,6 +179,23 @@ shinyServer(function(input,output) {
         #cat(input$datab_rows_selected, sep = ', ')
         cat(length(input$datab_rows_selected))
     })
+    
+    
+    output$download <- downloadHandler(        
+        filename <- function() {paste0("untitled.pdf")},
+        content <- function(file) {
+            pdf(file, width=input$dwidth, height=input$dheight)
+            pMake()
+            dev.off()
+            
+            
+            
+        }
+    )
+    
+#     output$brushOut <- renderPrint({
+#         brushedPoints(xy, yvar="gene", input$plot_brush)
+#     })
 
 
     
