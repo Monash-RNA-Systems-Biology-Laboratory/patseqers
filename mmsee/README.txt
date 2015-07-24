@@ -14,4 +14,5 @@ https://github.com/Victorian-Bioinformatics-Consortium/tail-tools
 The Hmaps app borrows heavily from the Nesoni library for producing it's heatmaps. More information about Nesoni can be found on:
 https://github.com/Victorian-Bioinformatics-Consortium/nesoni
 
-Additional documentation can be found hosted on the lab server or in the apps directory
+Additional documentation can be found hosted on the lab server or in the apps directory. Documentation provided are html files 
+written using markdown.
