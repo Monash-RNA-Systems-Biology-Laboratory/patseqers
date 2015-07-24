@@ -138,9 +138,6 @@ shinyServer(function(input,output) {
     pMake <- function()({
         
         x2 <- flt()
-        x2 <- DGEList(x2)
-        x2 <- calcNormFactors(x2)
-        x2 <- data.frame(cpm(x2, log=T, prior.count=priorC()))
         
         #Two if statements de-select columns for plotting
         #Would only need one if shiny would realise one is not being rendered by a conditional panel
@@ -150,6 +147,11 @@ shinyServer(function(input,output) {
         if(length(input$col2Disp1==0)){
             x2 <- x2[,-which(names(x2) %in% input$col2Disp1)]
         }
+        
+        x2 <- DGEList(x2)
+        x2 <- calcNormFactors(x2)
+        x2 <- data.frame(cpm(x2, log=T, prior.count=priorC()))
+        
         x2$Name <- rownames(x2)
         y2 <- merge(x2, y1())
         
