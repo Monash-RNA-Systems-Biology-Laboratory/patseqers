@@ -80,8 +80,14 @@ shinyServer(function(input,output) {
     })
     
     minN <- reactive({
-        return(input$nMin)
+        if(input$tab == 0){
+            return(input$nMin)
+        } else {
+            #return(4.0)
+            return(input$nMin1)
+        }       
     })
+    
     spanN <- reactive({
         if(input$tab == 0){
             return(input$minSpan)
@@ -91,8 +97,14 @@ shinyServer(function(input,output) {
         }
     })
     priorC <-  reactive({
-        return(input$prc)
+        if(input$tab == 0){
+            return(input$prc)
+        } else {
+            return(input$prc1)
+        }    
+        
     })
+    
     
     flt <-reactive({
         hld <- x1()
@@ -177,12 +189,7 @@ shinyServer(function(input,output) {
             
     })
     
-    pht <- reactive({
-        return(input$pheight)
-    })
-    pwt <- reactive({
-        return(input$pwidth)
-    })
+
     
     output$plot1 <- renderPlot({
 
