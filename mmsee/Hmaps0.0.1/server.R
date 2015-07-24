@@ -1,5 +1,18 @@
 #Server.R
-#Authors - Michael See
+#Authors - Michael See    mmsee2@student.monash.edu.au
+#        - Paul Harrison
+
+# A slightly long winded side-note on brush interactivity in this app:
+# Brushes (At least the way I have enabled them) for one reason or another does not have the resolution to 
+# select all the rows in the heatmap. 
+# To get around this, one may consider grabbing the index of the first and last rows the brush returns 
+# and match that to the dataframe and pull out all the rows in between to match and pull out the rows it needs.
+# Keeping in mind however, that the brush also fails to accurately select the last row brushed as well, so 
+# realistically, interactivity with the dendogram is might be more accurate if one worked out how to enable 
+# interactivity in that region of the plot. This is all of course something to consider while keeping in mind the 
+# plot is not interactive on the right region, and only allows brushes to be drawon over the rowmeans column.
+
+
 
 library(shiny)
 library(limma)
@@ -10,7 +23,7 @@ library(DT)
 source("help.R")
 
 shinyServer(function(input,output) {
-    xy <- data.frame()
+
     output$selDataSet <- renderUI({        
         sets.df <- read.csv("setname.csv", header=T)
         sets.df <- data.frame(lapply(sets.df, as.character), stringsAsFactors=F)
@@ -94,7 +107,8 @@ shinyServer(function(input,output) {
     output$plotui <- renderUI({
         input$gopt
         plotOutput("plot1", width=isolate(input$pwidth), height=isolate(input$pheight)
-                   
+# Commented out brush functions as they are a little broken and does not select all the rows being brushed
+
 #                    brush = brushOpts(
 #                        id = "plot_brush",                       
 #                        direction = 'y',#input$brush_dir,
@@ -103,6 +117,9 @@ shinyServer(function(input,output) {
         
         )
     })
+
+    # Called when the datatable needs to be rendered
+    # Contains the information that goes into that table
     mrg <- reactive({
         x2 <- flt()
         x2 <- DGEList(x2)
@@ -116,18 +133,22 @@ shinyServer(function(input,output) {
         return(t1)
     })
     
-    
+    #Function which plots
+    #Great assistance from Paul in debugging some side effects of reactive expressions
     pMake <- function()({
         
         x2 <- flt()
         x2 <- DGEList(x2)
         x2 <- calcNormFactors(x2)
         x2 <- data.frame(cpm(x2, log=T, prior.count=priorC()))
+        
+        #Two if statements de-select columns for plotting
+        #Would only need one if shiny would realise one is not being rendered by a conditional panel
         if(length(input$col2Disp==0)){
             x2 <- x2[,-which(names(x2) %in% input$col2Disp)]
         }
         if(length(input$col2Disp1==0)){
-            x2 <- x2[,-which(names(x2) %in% input$col2Disp)]
+            x2 <- x2[,-which(names(x2) %in% input$col2Disp1)]
         }
         x2$Name <- rownames(x2)
         y2 <- merge(x2, y1())
@@ -166,11 +187,13 @@ shinyServer(function(input,output) {
         a <- pMake()
         return(a)
     })
-    
+    #Renders the datatable
+    #The pMake() function takes the output from this table in the form of a vector of indicies which it can use
     output$datab = DT::renderDataTable(mrg(), server = F, rownames=F,
                                        options = list(searchHighlight = TRUE
                                                       ))
-
+    #Some verbatim input for debugging purposes and to display to the user how many rows they have selected
+    #Number of filtered rows is displayed in the table anyway
     output$tout = renderPrint({
         cat('\n\nFiltered Rows\n\n')
         #cat(input$datab_rows_all, sep = ', ')
@@ -187,9 +210,6 @@ shinyServer(function(input,output) {
             pdf(file, width=input$dwidth, height=input$dheight)
             pMake()
             dev.off()
-            
-            
-            
         }
     )
     

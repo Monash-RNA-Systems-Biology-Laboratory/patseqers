@@ -1,7 +1,9 @@
 #help.R
 #Authors - Paul Harrison
-#        - Michael See
+#        - Michael See    mmsee2@student.monash.edu.au
 
+
+# This is practically identical to hmap.elist from nesoni, but has been modified slightly for this app
 t1 <- function(filename.prefix, elist, 
                min.sd=0.0, min.span=0.0, min.svd=0.0, svd.rank=NULL,
                annotation1=c('gene'),
@@ -155,6 +157,8 @@ t2 <- function(filename.prefix, elist,
     sink()
     
     invisible(list(heatmap=heatmap, frame=frame))
-    return(frame)
+    # Returns the dataframe used in producing the heatmap which in theory could be used for further interactivity with brushes
+    # See the note about brush interactivity in server.R
+    return(frame) 
 }
     

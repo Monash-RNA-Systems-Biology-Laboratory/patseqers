@@ -1,8 +1,5 @@
 #ui.R
-#Authors - Michael See
-
-library(shiny)
-library(DT)
+#Authors - Michael See    mmsee2@student.monash.edu.au
 
 shinyUI(fluidPage(
     
@@ -12,7 +9,8 @@ shinyUI(fluidPage(
                  #     plotOutput("plot1", width="1400", height="850"), #Testing the output
                  fluidRow(
                      column(3,
-                            radioButtons("tab", label="Use Table", choices=list("False"=0, "True"=1), selected = 0, inline = T)
+                            radioButtons("tab", label="Use Table", choices=list("False"=0, "True"=1), selected = 0, inline = T),
+                            h6("Please note that libraries may take up to a minute to load on upon launch.")
                      ),
                      column(3,
                               numericInput("dwidth", label = "Plot Width (in)", value = 14)
@@ -35,7 +33,7 @@ shinyUI(fluidPage(
                                              numericInput("prc", label = "Prior count", value = 0.5)
                                       ),
                                       column(3, 
-                                             h4("ParameterB"),
+                                             h4("Plot Information"),
                                              numericInput("minSpan", label = "Minimum span", value = 4.0),
                                              uiOutput("selCol")
                                       )
