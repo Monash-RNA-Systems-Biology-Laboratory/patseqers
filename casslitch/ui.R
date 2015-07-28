@@ -1,27 +1,23 @@
 library(shiny)
 
-# gene_exp<-read.csv("genewise-count.csv")
-# check_boxes<-names(gene_exp[c(2:length(names(gene_exp)))])
-
-
-# Define UI for application that draws a histogram
 shinyUI(fluidPage(
   
   # Application title
-  titlePanel("TB22-88"),
+  titlePanel("Genewise Plotter"),
   
   sidebarPanel(
-    selectInput("sampleX", "xvar",
+    selectInput("sampleX", "Select sample for x-axis",
                        check_boxes,selected="N2_mean"),
     
-    selectInput("sampleY", "yvar",
+    selectInput("sampleY", "Select sample for y-axis",
                        check_boxes,selected="Gld2_mean"),
     
-    radioButtons("dataframx", "Data type X", 
+    radioButtons("dfxtype", "Data type x-axis", 
                        choices= list("expression log2(RPM)"= "genewise_exp", "tail length"="genewise_tail_length"),selected="tail length"),
     
-    radioButtons("dataframy", "Data type Y", 
+    radioButtons("dfytype", "Data type y-axis", 
                        choices= list("expression log2(RPM)"= "genewise_exp", "tail length"="genewise_tail_length"),selected="tail length"),
+    
     radioButtons("isoforms", "Include isoforms in GO term search?", 
                        choices= list("Yes"= T, "No"= F),selected="No")
   ),
@@ -30,9 +26,9 @@ shinyUI(fluidPage(
   mainPanel(
       plotOutput("distPlot"),
       submitButton(text = "Apply Changes", icon = NULL),
-      textInput("bygene", label="search by gene", value = ""),
-      textInput("GOterm", label="GOterm", value = ""),
-      textInput("productterm", label="Product description key term", value = ""),
+      textInput("bygene", label="search by gene name", value = ""),
+      textInput("GOterm", label="search by GOterm", value = ""),
+      textInput("productterm", label="search by product description key term", value = ""),
       downloadButton("downloadPlot", label = "Download Plot")
   
     )

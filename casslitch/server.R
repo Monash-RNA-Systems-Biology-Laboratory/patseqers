@@ -4,11 +4,11 @@ library(biomaRt)
 
 
 shinyServer(function(input,output,session){
-  #turning shiny user inputs into variables
+  #funtions returning user inputs
    selectionX<-reactive({
       return(input$sampleX)
     })
-    
+   
    selectionY<-reactive({
       return(input$sampleY)
     })
@@ -21,32 +21,39 @@ shinyServer(function(input,output,session){
      return(input$productterm)
    })
    
-   searchterm<-reactive({
+  searchterm<-reactive({
     return(input$bygene)
   })
   
-  dataframx<-reactive({
-    return(input$dataframx)
+  dfxtype<-reactive({
+    return(input$dfxtype)
   })
   
-  dataframy<-reactive({
-    return(input$dataframy)
+  dfytype<-reactive({
+    return(input$dfytype)
   })
   
   
   output$distPlot <- renderPlot({
-      
-#turning shiny user inputs into variables
+    
+      #turning shiny user inputs into variables
       df1<-genewise_exp
-      dafx<-dataframx()
-      dafy<-dataframy()
+      dafx<-dfxtype()
+      dafy<-dfytype()
       selX<-selectionX()
       selY<-selectionY()
       dfx<-get(dafx)
       dfy<-get(dafy)
       Gts<-GOt()
       
-#creating data frame for plotting given GOterm
+      #base plot
+      plot_out<-ggplot(df1,aes_string(x=dfx[selX],y=dfy[selY]))+geom_point()
+      plot_out<-plot_out+labs(x=paste(dafx,selX),y=paste(dafy,selY))
+      plot_out<-plot_out+theme_bw()
+      
+    
+      
+      #creating data frame for plotting given GOterm
       GO_data<-function(GOterm){
         genes<-get_genes_GO(GOterm)
         df<-data.frame(genes,selectionX=0,selectionY=0, GOterm,row.names=1)
@@ -66,8 +73,8 @@ shinyServer(function(input,output,session){
             }
           }}}
         
+        #without isoforms
         else{
-        #without isoforms       
         for(gene in rownames(df)){
           if ((gene %in% rownames(dfx))){
             if ((gene %in% rownames(dfy))){
@@ -79,7 +86,7 @@ shinyServer(function(input,output,session){
         return(df)
       }
 
-#creating data frame for plotting given product term
+      #creating data frame for plotting given product term
       product_data<-function(keyterm){
         genes<-get_genes(keyterm,df_info,"product")
         df<-data.frame(genes,selectionX=0,selectionY=0, keyterm,row.names=1)
@@ -97,7 +104,7 @@ shinyServer(function(input,output,session){
       }
 
  
- #create data frame given file with genes
+    #create data frame given file with genes to be hightlighted
       RBP_data<-function(){
         genes<-lapply(NR_df[,"refseq_mrna"],as.character)
         genes<-unlist(genes)
@@ -122,12 +129,6 @@ shinyServer(function(input,output,session){
         return(df)
       }
       
-    #base plot
-    plot_out<-ggplot(df1,aes_string(x=dfx[selX],y=dfy[selY]))+geom_point()
-    plot_out<-plot_out+labs(x=paste(dafx,selX),y=paste(dafy,selY))
-    
-    
-      
     #plot GO terms
      if(Gts!=""){
       GO_terms<-strsplit(Gts,",")[[1]]
@@ -147,35 +148,40 @@ shinyServer(function(input,output,session){
         }
         }
     
-    
-   #plot adele's data (genes from file)
-    
+    #highlight given gene yellow (or start of gene name)
+    gene1<-searchterm()
+    if(gene1!=""){
+      genes1<-get_genes(gene1,df_info,"gene")
+      for(gene in genes1){
+          plot_out<-plot_out+geom_point(data=df1,aes_string(x=dfx[gene,selX],y=dfy[gene,selY]),colour="yellow", size=3.0)
+        }
+      
+        }
+  
+    #plot genes from file
     df6<-RBP_data()
-    View(df6)
     plot_out<-plot_out+geom_point(data=df6,aes_string(x=df6[1],y=df6[2]),colour="red")
-    plot_out<-plot_out+theme_bw()
+   
     
-    #Blue lines and p-value
+    #p-value
     if(dafy=="genewise_tail_length" & dafx=="genewise_tail_length"){
       diff_all<-log2(dfx[selX]+0.5)-log2(dfy[selY]+0.5)
       diff_adele<-log2(df6[selX]+0.5)-log2(df6[selY]+0.5)
-      fold<-rlm(df6[,selX]~df6[,selY],na.action=na.omit)
-      fold<-fold[[1]][2]
-      #print(fold)
-      #fold <- 2**colMeans(diff_all,na.rm=T)[[1]]
       p_val<-t.test(diff_all[1],diff_adele[1])
       p_val<-p_val[[3]] #get pvalue
       print(p_val)
-      plot_out<-plot_out+geom_abline(color="blue",slope=fold, lty=2,size=1)
-      plot_out<-plot_out+geom_abline(colour="blue",size=1.0)
-      plot_out<-plot_out+annotate(geom="text", x=100, y=25, label=paste0("p-value = ",round(p_val,digits=4)), color="black")
+      plot_out<-plot_out+annotate(geom="text", x=20, y=90, label=paste0("p-value = ",round(p_val,digits=4)), color="black")
       }
+    
+    #blue line
+    if(dafx==dafy)
+      plot_out<-plot_out+geom_abline(colour="blue",size=1.0)
     
       plot(plot_out)
     })
   
   
-   #download plot
+  #download plot
   output$downloadPlot<-downloadHandler(
     filename = function(){
       "file.pdf"
