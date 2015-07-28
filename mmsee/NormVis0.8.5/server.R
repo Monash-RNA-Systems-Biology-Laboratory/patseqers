@@ -1,35 +1,42 @@
 
 
 #server.R
-#Authors: Michael See, Andrew Pattinson
+#Authors: Michael See, Andrew Pattison
 
-library(ggplot2)
+library(ggplot2) 
 library(edgeR) 
 library(reshape2)
 library(plyr)
 
-
 shinyServer(function(input,output) {
+    bar <- list()
+    bar1 <- F
+    bar2 <- ""
     
     csvmd <- reactive({
-        orig.df <- data.frame(read.csv(file.path(paste0(input$datset),paste0(input$datset,"-count.csv")), header = TRUE))
-        name.df <- data.frame(read.csv(file.path(paste0(input$datset),paste0(input$datset,"-info.csv")), header = TRUE))
+        orig.df <- data.frame(read.csv(file.path(paste0(input$datset),paste0(input$datset,"-count.csv")), stringsAsFactors=F, header = TRUE))
+        name.df <- data.frame(read.csv(file.path(paste0(input$datset),paste0(input$datset,"-info.csv")), stringsAsFactors=F, header = TRUE))
+
         
         nameN.df <- data.frame(name.df[,3], name.df[,1])
         colnames(nameN.df) <- c("Gene", "Name")
         
-        origN.df <- merge(orig.df, nameN.df)
-        nameN.df <- merge(orig.df, nameN.df)
-        #origN.df <- subset(origN.df, !duplicated(origN.df$Gene))
+        origN.df <- merge(orig.df, nameN.df, "Name")
+        nameN.df <- merge(orig.df, nameN.df, "Name")
+
         dup <- duplicated(origN.df$Gene)
-        nameN.df <- subset(nameN.df, !duplicated(origN.df$Gene))
-        orig.df <- subset(orig.df, !duplicated(origN.df$Gene))
+        g1.df <- data.frame(origN.df$Gene)
+        g1.df <- data.frame(lapply(g1.df, as.character), stringsAsFactors=F)
+        
+        colnames(g1.df) <- "Gene"
+        for(i in 1:dim(g1.df)[1]){
+            if(dup[i]){               
+                g1.df$Gene[i] <- paste0(nameN.df$Gene[i], ".", nameN.df$Name[i])
+            }
+        }
         
         origN.df <- orig.df[,-1]
-        rownames(origN.df) <- nameN.df$Gene #Gene names are now appropriately added as rownames
-        
-        #Load in config file
-        
+        rownames(origN.df) <- g1.df$Gene #Gene names are now appropriately added as rownames
         return(origN.df)
     })
     
@@ -48,9 +55,6 @@ shinyServer(function(input,output) {
         return(input$geneToNorm)
     })
     
-    output$n <- reactive({
-        return(input$nPlotV)
-    })
     gtg <- reactive({
         return(input$geneToGraph)
         
@@ -63,10 +67,6 @@ shinyServer(function(input,output) {
                     any(row >= input$nMin)
                 }),])
         })
-    
-    nPlot <- reactive({
-        input$nPlotV
-    })
     
     output$selDataSet <- renderUI({
         sets.df <- read.csv("setname.csv", header=T)
@@ -86,14 +86,6 @@ shinyServer(function(input,output) {
     })
     
     observeEvent(input$do,{
-        if(is.null(gtg())){
-            print(gtg())
-            return(0)
-        }
-        
-        #numDup <- input$numRep + 1 #number of duplicates done
-        #numSet <- input$setNum #Number of sets of data
-        #timVec <- unique(na.omit(as.numeric(unlist(strsplit(unlist(input$timScale), "[^0-9]+"))))) Depricated
         
         meltsplit <- function(tomelt, namelist){
             tomelt$Name <- rownames(tomelt)
@@ -118,7 +110,6 @@ shinyServer(function(input,output) {
                 graphlist.ls[[i]] <- split(graphlist.ls[[i]], graphlist.ls[[i]]$line)
             }
             for(i in 1:length(graphlist.ls)){
-                #print(paste0(len,"a"))
                 
                 for(j in 1:length(graphlist.ls[[i]])){
                     graphlist.ls[[i]][[j]] <- ddply(graphlist.ls[[i]][[j]], "xaxis", numcolwise(mean))
@@ -126,7 +117,6 @@ shinyServer(function(input,output) {
                 }
                 
             }
-            
             return(graphlist.ls)
         }
         
@@ -143,7 +133,7 @@ shinyServer(function(input,output) {
             flt.df <- indf
             flt.df <- DGEList(flt.df)
             flt.df <- calcNormFactors(flt.df)
-            ret <- data.frame(cpm(flt.df, log=F, prior.count=input$pRC))
+            ret <- data.frame(cpm(flt.df, log=T, prior.count=input$pRC))
             return(ret)
         }
         
@@ -152,7 +142,6 @@ shinyServer(function(input,output) {
             for(i in 1:numGenGraph()){
                 for(j in 1:length(m2[[1]])){
                     m2[[i]][[j]]$linename <- (merge(m2[[i]][[j]], rdcfg(), "line")$linename[1])
-                    #m2[[i]][[j]]$lineName <- paste0(m2[[i]][[j]]$Name, "_Line",m2[[i]][[j]]$line)
                     m2[[i]][[j]]$unnormVarl2 <- log2(m2[[i]][[j]]$value)
                     plot2 <- plot2 + geom_line(data=m2[[i]][[j]], aes(x=xaxis,y=unnormVarl2, colour=linename))
                 }
@@ -162,23 +151,23 @@ shinyServer(function(input,output) {
         
         fldcng <- function(df){
             a <- which(df$fldcng!=0, arr.ind=T)
-            df$foldvalue <- df$value/df$value[a[1]]
-            for(i in 1:length(df$foldvalue)){
-                if(df$foldvalue[i] < 1){
-                    df$foldvalue[i] <- 1/df$foldvalue[i]*-1 
-                }
-            }
+            df$foldvalue <- log2(df$value) - log2(df$value[a[1]])
+#             for(i in 1:length(df$foldvalue)){
+#                 if(df$foldvalue[i] < 1){
+#                     df$foldvalue[i] <- 1/df$foldvalue[i]*-1 
+#                 }
+#             }
             return(df)
         }
         
         fldcng2 <- function(df){
             a <- which(df$fldcng!=0, arr.ind=T)
-            df$foldvaluetmm <- df$normVal/df$normVal[a[1]]
-            for(i in 1:length(df$foldvaluetmm)){
-                if(df$foldvaluetmm[i] < 1){
-                    df$foldvaluetmm[i] <- 1/df$foldvaluetmm[i]*-1 
-                }
-            }
+            df$foldvaluetmm <- log2(df$normVal) - log2(df$normVal[a[1]])
+#             for(i in 1:length(df$foldvaluetmm)){
+#                 if(df$foldvaluetmm[i] < 1){
+#                     df$foldvaluetmm[i] <- 1/df$foldvaluetmm[i]*-1 
+#                 }
+#             }
             return(df)
         }
         
@@ -197,10 +186,12 @@ shinyServer(function(input,output) {
             tp.df$dub <- floor(tp.df$X)
             g1 <- merge(rd, tp.df, by.x="X", by.y="dub")
             g1 <- fldcng(g1)
-
-            plot2 <- ggplot(g1, aes(x=linename,y=foldvalue, fill=factor(linename))) + geom_bar(stat="identity", width = 0.75)
-            plot2 <- plot2 + ggtitle(paste0("Fold change in relation to ", g1$linename[which(g1$fldcng!=0, arr.ind=T)]))
+            g2 <- g1
+            g2 <- g2[-which(g1$fldcng!=0, arr.ind=T),]
             
+            plot2 <- ggplot(g2, aes(x=factor(linename, levels=unique(linename)),y=foldvalue, fill=factor(linename, levels=unique(linename)))) + geom_bar(stat="identity", width = 0.75)
+            plot2 <- plot2 + ggtitle(paste0("Log2 Fold change in relation to ", g1$linename[which(g1$fldcng!=0, arr.ind=T)])) + guides(fill=guide_legend(title=NULL))
+
             return(plot2)
         }
         
@@ -210,10 +201,10 @@ shinyServer(function(input,output) {
             
             if(dim(tograph[[1]][[1]]) == 1){
                 p2 <- plotHelper2siz1(tograph)
-                p2 <- p2 + ylab("Fold change") + xlab("Strain")
+                p2 <- p2 + ylab("Log2 Fold change (CPM)") + xlab("Strain")
             } else {
                 p2 <- plotHelper2(meltsplit(flt(), gtg()))
-                p2 <- p2 + ggtitle(paste0("Log2 of un-normalised counts")) + ylab("Log2(RPM)") + xlab("Time")
+                p2 <- p2 + ggtitle(paste0("Log2 of un-normalised counts")) + ylab("Log2(CPM)") + xlab("Time")
             }
             return(p2)
         })
@@ -232,16 +223,16 @@ shinyServer(function(input,output) {
                 for(i in 1:numGenGraph()){
                     for(j in 1:length(m3[[1]])){
                         m3[[i]][[j]]$linename <- (merge(m3[[i]][[j]], rdcfg(), "line")$linename[1])
-                        #m3[[i]][[j]]$lineName <- paste0(m3[[i]][[j]]$Name, "_Line",m3[[i]][[j]]$line)
                         m3[[i]][[j]]$normVarl2 <- m2[[1]][[j]]$value
                         plot3 <- plot3 + geom_line(data=m3[[i]][[j]], aes(x = xaxis, y = normVarl2, colour=linename))
+                        
+                        #TODO: Change xaxis to a factor so that it reads anything
                     }
                 }
             } else {
                 for(i in 1:numGenGraph()){
                     for(j in 1:length(m3[[1]])){
                         m3[[i]][[j]]$linename <- (merge(m3[[i]][[j]], rdcfg(), "line")$linename[1])
-                        #m3[[i]][[j]]$lineName <- paste0(m3[[i]][[j]]$Name, "_Line",m3[[i]][[j]]$line)
                         m3[[i]][[j]]$naive <- m3[[i]][[j]]$value/tn[[1]][[j]]$value
                         plot3 <- plot3 + geom_line(data=m3[[i]][[j]], aes(x = xaxis, y = naive, colour=linename)) +
                             ylab("log2 RPM") + xlab("Time")
@@ -289,16 +280,28 @@ shinyServer(function(input,output) {
             g1 <- merge(rd, tp.df, by.x="X", by.y="dub")
             g1 <- fldcng(g1)
             g1 <- fldcng2(g1)
+            
+            g2 <- g1
+            g2 <- g2[-which(g1$fldcng!=0, arr.ind=T),]
            
             if(input$drTMM){
-                plot3 <- ggplot(g1, aes(x=linename,y=foldvaluetmm, fill=factor(linename))) + geom_bar(stat="identity", width = 0.75)
-                plot3 <- plot3 + ggtitle(paste0("Fold change in relation to ", g1$linename[which(g1$fldcng!=0, arr.ind=T)], " After TMM normalisation"))
+                plot3 <- ggplot(g2, aes(x=factor(linename, levels=unique(linename)),y=foldvaluetmm, fill=factor(linename, levels=unique(linename)))) + geom_bar(stat="identity", width = 0.75)
+                plot3 <- plot3 + ggtitle(paste0("Log2 Fold change in relation to ", g1$linename[which(g1$fldcng!=0, arr.ind=T)], " After TMM normalisation")) + guides(fill=guide_legend(title=NULL))
             } else {
-                plot3 <- ggplot(g1, aes(x=linename,y=foldvalue, fill=factor(linename))) + geom_bar(stat="identity", width = 0.75)
-                plot3 <- plot3 + ggtitle(paste0("Fold change in relation to ", g1$linename[which(g1$fldcng!=0, arr.ind=T)], " Normalised against ", gtn()))
+                plot3 <- ggplot(g2, aes(x=factor(linename, levels=unique(linename)),y=foldvalue, fill=factor(linename, levels=unique(linename)))) + geom_bar(stat="identity", width = 0.75)
+                plot3 <- plot3 + ggtitle(paste0("Log2 Fold change in relation to ", g1$linename[which(g1$fldcng!=0, arr.ind=T)], " Normalised against ", gtn())) + guides(fill=guide_legend(title=NULL))
+                
             }
-            
+            fx(g1$linename[which(g1$fldcng!=0, arr.ind=T)])
+            print(bar)
+            if(bar1 == T)
+            print(bar)
             return(plot3)
+        }
+        
+        fx <- function(t1){
+            bar1 <<- T
+            bar2 <<- paste0(t1)
         }
         
         plotInput3 <- reactive({
@@ -316,7 +319,7 @@ shinyServer(function(input,output) {
                 if(input$drTMM){
                     p3 <- p3 + ggtitle(paste0(gtg(),"Against library")) + ylab("TMM (RPM)") + xlab("Time")
                 } else {
-                    p3 <- p3 + ggtitle(paste0(gtg(),"/ Against single gene (", gtn(), ")")) + ylab("Log2 RPM") + xlab("Time")
+                    p3 <- p3 + ggtitle(paste0(gtg()," Against single gene (", gtn(), ")")) + ylab("Log2 RPM") + xlab("Time")
                 }
             }
             
@@ -340,6 +343,26 @@ shinyServer(function(input,output) {
                 ggsave(file,plotInput3())
         
             })
+        output$tout = renderPrint({
+            cat("What I'm doing: \n\n")
+            if(bar1==T){
+                cat(paste0("Top Graph: I am plotting log2 foldchange of ", gtg(), " against " , bar2, "\n\n"))
+                if(input$drTMM){
+                    cat(paste0("Bottom Graph: I am plotting log2 foldchange of ", gtg(), " against " , bar2, " normalised by TMM"))
+                } else {
+                    cat(paste0("Bottom Graph: I am plotting log2 foldchange of ", gtg(), " against " , bar2, " normalised against ", gtn()))
+                }
+                
+            } else {
+                cat(paste0("Top Graph: I am plotting log2 counts of ", gtg(), "\n\n"))
+                if(input$drTMM){
+                    cat(paste0("Bottom Graph: I am plotting log2 counts of ", gtg(), " normalised by TMM"))
+                } else {
+                    cat(paste0("Bottom Graph: I am plotting log2 counts of ", gtg(), " normalised against ", gtn()))
+                }
+            }
+        })
+
         
     })
 })
