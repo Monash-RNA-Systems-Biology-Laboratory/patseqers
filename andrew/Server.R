@@ -12,7 +12,7 @@ shinyServer(function(input, output, session) {
   })
   
   found_gff_files <- reactive({
-    find_gff_files(paste0("./", input$file_path))
+    find_gff_files(paste0(input$file_path))
   })
   output$gff_files <- renderUI({
     selectInput("gff_select", label = h4("GFF File Selection"), 
@@ -20,7 +20,7 @@ shinyServer(function(input, output, session) {
                 selected =  found_gff_files()[1])   
   })
   found_bam_files <- reactive({
-    find_bam_files(paste0("./", input$file_path, "/"))
+    find_bam_files(paste0(input$file_path, "/"))
   })
   output$bam_files <- renderUI({
     checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
@@ -31,7 +31,13 @@ shinyServer(function(input, output, session) {
   processed_gff <- reactive({
     withProgress(message = 'Processing the gff file, this may take a few seconds.',
                  detail = 'This only happens once.', value = 0,{
-      modify_gff_inplace(paste("./", input$file_path,"/", input$gff_select,sep=""))
+                   if (substring(input$gff_select,1,1)=="/"){
+                    modify_gff_inplace(paste(input$gff_select))
+                   }
+                   else{
+                    modify_gff_inplace(paste("./", input$file_path,"/", input$gff_select,sep=""))
+                  }
+      
                  }
     )
   })

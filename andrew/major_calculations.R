@@ -1,12 +1,25 @@
 
 # Returns a list of bam files from the nominated directory
 find_bam_files <- function(file_path) {
-  bam_files <- list.files(paste (file_path), pattern = '*.bam$', recursive =T)
+  if(file.exists(paste0(file_path,'/','plotter-config.json'))){
+    json <- fromJSON(paste0(file_path,'/', "plotter-config.json"))
+    bam_files <- json$samples$bam 
+  }
+  else{
+    bam_files <- list.files(paste (file_path), pattern = '*.bam$')
+  }
   return(bam_files)
 }
+
 # Returns a list of gff files from the nominated directory
 find_gff_files <- function(file_path) {
-  gff_files <- list.files(paste(file_path), pattern = '*.gff$', recursive =T)
+  if(file.exists(paste0(file_path,'/','plotter-config.json'))){
+    json <- fromJSON(paste0(file_path,'/', "plotter-config.json"))
+    gff_files <- json$peaks    
+  }
+  else{
+    gff_files <- list.files(paste(file_path), pattern = '*.gff$')    
+  }
   return(gff_files)
 }
 
@@ -36,8 +49,10 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       }
       for (sample in samples) {
         points <- data.frame(sample$width, sample$number_of_as)
-        ymax <- nrow(points)    
-        plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab) 
+        ymax <- nrow(points)  
+    
+        plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
+             main= paste(sample[1,'sample']))
         for (i in 1:ymax){
           segments(x0= 0, y0= i,x1= points[i,1], col="purple")
           segments(x0= points[i,1], y0= i,x1= points[i,1] +points[i,2] , col="pink")
@@ -131,7 +146,6 @@ get_a_counts <- function(bam_file_path,gff_rows, bam_files,names, groups){
 
 
 get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
-  print(str(peak))
   if (peak[,"Orientation"]== "-"){
     ori <- TRUE    
   }
@@ -139,9 +153,14 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
     ori <- FALSE
   }
   bam_frame <- data.frame()
-  count <- 1 
+  count <- 1
   for (bam_file in bam_files){
-    full_file_path <-paste(bam_file_path,"/", bam_file, sep ="")
+    if (substring(bam_file,1,1)=="/"){
+      full_file_path <-bam_file
+    }
+    else{
+      full_file_path <-paste(bam_file_path,"/", bam_file, sep ="")
+    }
     
     param <- ScanBamParam(what=c('qname','pos','qwidth','strand'),
                           tag=c('AN','AD'),flag=scanBamFlag(isMinusStrand=ori) , 
@@ -155,7 +174,6 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
     if (length(result [[1]][[5]][[2]])!= length(result [[1]][[5]][[1]])){
       result [[1]][[5]][[2]] <- rep(NA, length(result [[1]][[5]][[1]]))      
     }
-    print(str(result))
     single_bam_frame <-  data.frame(result) 
     colnames(single_bam_frame)<- c("qname", "strand", "pos", 
                                    "width", "number_of_as", "number_of_ad_bases")
@@ -199,7 +217,6 @@ names_string <- function(s_frame, groups){
   return(to_print)
 }
 modify_gff_inplace <- function (gff_file) {
-  print(gff_file)
   start_gff_file <- read.delim(gff_file, header=FALSE,
                                comment.char="",stringsAsFactors=F)
 
@@ -208,7 +225,6 @@ modify_gff_inplace <- function (gff_file) {
                                'Orientation', '--','Information')
   
   plus_frame <- start_gff_file[start_gff_file[,'Orientation'] == '+',]
-  print(str(plus_frame))
   plus_frame [,c('Peak_Start', 'Peak_End')] <- plus_frame [,c('Peak_Start', 'Peak_End')]+10
   
   plus_reads <- plus_frame[
@@ -235,7 +251,6 @@ modify_gff_inplace <- function (gff_file) {
     if (plus_reads[row,'Peak_Start'] <= plus_reads[row-1,'Peak_End']){
         plus_reads[row,'Peak_Start'] <- 
         plus_reads[row-1,'Peak_End']+1 
-        print('sub made')
     }
   }
   for (row in 1:nrow(minus_reads)){
@@ -246,7 +261,6 @@ modify_gff_inplace <- function (gff_file) {
     if (minus_reads[row,'Peak_End'] >= minus_reads[row+1,'Peak_Start']){
         minus_reads[row,'Peak_End'] <- 
         minus_reads[row+1,'Peak_Start']-1 
-        print('sub made')
     }
   }
   new_frame <- rbind(plus_frame, minus_frame)
