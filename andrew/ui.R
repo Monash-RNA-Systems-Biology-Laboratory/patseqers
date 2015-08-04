@@ -14,11 +14,6 @@ shinyUI(fluidPage(
   sidebarPanel(
   
     uiOutput("select_file_path"),
-   # checkboxInput("data_set_2", label = "Compare Datasets", value = F),
-   # conditionalPanel(
-   #   condition = "input.data_set_2 == true",   
-   #   uiOutput("select_file_path_2")
-  #  ),
     textInput("select_genes", label = h5("Select Your 
                                          Favourite Gene(s) or a Peak(s) 
                                          Separated by a Space"),
@@ -45,6 +40,7 @@ shinyUI(fluidPage(
     downloadButton("downloadPlot", label = "Download Plot"),
     
     checkboxInput("legend", label = "Display Legend", value = T),
+    checkboxInput("mm_frame", label = "Show Poly-(A) Tail Length Means and Medians from these Reads", value = F),  
     checkboxInput("gff_info", label = "Display GFF Info", value = F),
     checkboxInput("show_reads", label = "Show Reads", value = F),     
     sliderInput("xslider", label= 'x axis slider', min=0, max=400,
@@ -67,6 +63,10 @@ shinyUI(fluidPage(
     conditionalPanel(
       condition = "input.gff_info == true",
       dataTableOutput("gff_rows")
+    ),
+    conditionalPanel(
+      condition = "input.mm_frame == true",
+      dataTableOutput("means_frame")
     ),
     conditionalPanel(
       condition = "input.show_reads == true",

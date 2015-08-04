@@ -3,7 +3,7 @@
 find_bam_files <- function(file_path) {
   if(file.exists(paste0(file_path,'/','plotter-config.json'))){
     json <- fromJSON(paste0(file_path,'/', "plotter-config.json"))
-    bam_files <- json$samples$bam 
+    bam_files <- json$samples
   }
   else{
     bam_files <- list.files(paste (file_path), pattern = '*.bam$')
@@ -68,11 +68,9 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
           col="white", xlim=ranges, main= paste(names),
           axes=F, xlab= 'Poly (A)-Tail Length', ylab = 'Percent Population (%)', ylim =c(0,100))
     axis(1, pos=0, tick = 25)
-    axis(2, pos= 0, at= c(0,25,50,75,100), tick = 25)
+    axis(2, pos= 0, at= c(0,25,50,75,100), tick = 25)   
     
-    
-    count <- 1
-    
+    count <- 1  
     
     for (df in samples){
       split_peak <- split(df,df$gene_or_peak_name, drop =T)    
@@ -94,7 +92,8 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
     }
     
     if (leg ==T){ 
-      legend(ranges[2]-40,95 + (length(samples)*5), 
+      x_offset <-  length(strsplit(paste(leg_names), "")[[1]])
+      legend(ranges[2]-30-(x_offset)*2,110 +(length(samples)*-0.8), 
              legend = leg_names, fill = colours, bty ="n")
     }
   }
@@ -119,26 +118,21 @@ filter_gff_for_rows<- function (gff,names){
       index1 <- with(gff, grepl 
                      (ignore.case = T,paste('=',name,'$',sep=""), gff[,'Information']))
     }
-    if (sum(index1)==0){
-      index1 <- with(gff, grepl 
-                     (ignore.case = T,paste('=',name,'$',sep=""), gff[,'Information']))
-    }
-    
     output <-gff[index1, ] 
+    output$input_gene_or_peak <- name
     empty <- rbind(empty, output)
   }
   return(empty)
 }
 
 # This function gets the poly (A) counts for all given gff rows
-get_a_counts <- function(bam_file_path,gff_rows, bam_files,names, groups){
+get_a_counts <- function(bam_file_path,gff_rows, bam_files, groups){
   reads_report <- data.frame() 
-  split_names <- strsplit(names, " ")
-  
+
   for (gff_row in 1:nrow(gff_rows)){
     counts_frame <- get_a_counts_gff_row(bam_file_path, gff_rows[gff_row,], 
                                          bam_files, groups)
-    counts_frame$gene_or_peak_name <- split_names[[1]][gff_row]
+    counts_frame$gene_or_peak_name <- gff_rows[gff_row, 'input_gene_or_peak']
     reads_report <-rbind(reads_report,counts_frame)      
   }
   return(reads_report)
@@ -172,7 +166,7 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
     #If not, I make a fake one of NAs.
     
     if (length(result [[1]][[5]][[2]])!= length(result [[1]][[5]][[1]])){
-      result [[1]][[5]][[2]] <- rep(NA, length(result [[1]][[5]][[1]]))      
+      result [[1]][[5]][[2]] <- rep('F', length(result [[1]][[5]][[1]]))      
     }
     single_bam_frame <-  data.frame(result) 
     colnames(single_bam_frame)<- c("qname", "strand", "pos", 
@@ -198,17 +192,19 @@ trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 
 names_string <- function(s_frame, groups){
+  # The data frame is split by samples here
   to_print <- character()
   for (frame in s_frame){
-    split_peaks <- split(frame ,frame$gene_or_peak_name, drop =T)
+    #The data frame is split into genes here
+      split_peaks <- split(frame ,frame$gene_or_peak_name, drop =T)
     for (peak_frame in split_peaks){
       
       if (groups == T){
-        str <- paste("The poly (A) read count for ", peak_frame$group[1]," ",
+        str <- paste("The number of reads with a poly (A)-tail is ", peak_frame$group[1]," ",
                      peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
       }
       else{
-        str <- paste("The poly (A) read count for ", peak_frame$sample[1]," ",
+        str <- paste("The number of reads with a poly (A)-tail is ", peak_frame$sample[1]," ",
                      peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
       }
       to_print <- c(to_print, str)
@@ -225,7 +221,7 @@ modify_gff_inplace <- function (gff_file) {
                                'Orientation', '--','Information')
   
   plus_frame <- start_gff_file[start_gff_file[,'Orientation'] == '+',]
-  plus_frame [,c('Peak_Start', 'Peak_End')] <- plus_frame [,c('Peak_Start', 'Peak_End')]+10
+  plus_frame [,c('Peak_Start', 'Peak_End')] <- plus_frame [,c('Peak_Start', 'Peak_End')]+12
   
   plus_reads <- plus_frame[
     with(plus_frame,order(
@@ -234,11 +230,11 @@ modify_gff_inplace <- function (gff_file) {
     ]
   
   minus_frame <- start_gff_file[start_gff_file[,'Orientation'] == '-',]
-  minus_frame [,c('Peak_Start', 'Peak_End')] <- minus_frame [,c('Peak_Start', 'Peak_End')]-10
+  minus_frame [,c('Peak_Start', 'Peak_End')] <- minus_frame [,c('Peak_Start', 'Peak_End')]-12
   
   minus_reads<- minus_frame[
     with(minus_frame,order(
-      Chromosome,Orientation,Peak_Start)
+      Chromosome,Peak_Start)
     ),
     ]
   for (row in 1:nrow(plus_reads)){
@@ -254,15 +250,41 @@ modify_gff_inplace <- function (gff_file) {
     }
   }
   for (row in 1:nrow(minus_reads)){
-    if (row == nrow(minus_reads) | minus_reads[row, 'Chromosome'] !=
-        minus_reads[row+1,'Chromosome']){
-            next
+    if (row==nrow(minus_reads)){
+      next
+    }
+    if (minus_reads[row, 'Chromosome'] != minus_reads[row+1,'Chromosome']){
+      next
+          
     }
     if (minus_reads[row,'Peak_End'] >= minus_reads[row+1,'Peak_Start']){
-        minus_reads[row,'Peak_End'] <- 
-        minus_reads[row+1,'Peak_Start']-1 
+        minus_reads[row,'Peak_End'] <- minus_reads[row+1,'Peak_Start']-1 
     }
   }
-  new_frame <- rbind(plus_frame, minus_frame)
+  new_frame <- rbind(plus_reads, minus_reads)
   return(new_frame)
 }
+
+make_means_and_meds_frame <- function (poly_a_counts){
+  print(poly_a_counts[1,"group"])
+    if (poly_a_counts[1,"group"]== "group NULL"){
+      into_samples <- split(poly_a_counts, poly_a_counts$sample)
+      mm_frame <- data.frame()
+      for (sample in into_samples){
+        print(str(sample$number_of_as))
+        sample_mean <- mean(sample$number_of_as, na.rm =T)
+        print(sample_mean)
+        sample_median <- median(sample$number_of_as, na.rm =T)
+        to_bind <- cbind(sample[1, "sample"],sample_mean, sample_median)
+        mm_frame <- rbind(mm_frame,to_bind)
+      }
+      colnames (mm_frame) <- c("Sample Name", "Mean Poly (A)-Tail Length", "Median Poly (A)-Tail Length")
+    return(mm_frame)
+    }
+ }
+  
+#}
+
+
+
+

@@ -1,14 +1,13 @@
 # a change
 source("major_calculations.R")
 library("Rsamtools")
-library("extrafont")
 library("jsonlite")
 
 shinyServer(function(input, output, session) {
   output$select_file_path <- renderUI({
     selectInput("file_path", label = h4("Select a dataset"), 
                 choices = list.dirs(full.names=F, recursive =F), 
-                selected =  list.dirs(full.names=F, recursive =F)[7])   
+                selected =  list.dirs(full.names=F, recursive =F)[9])   
   })
   
   found_gff_files <- reactive({
@@ -23,10 +22,23 @@ shinyServer(function(input, output, session) {
     find_bam_files(paste0(input$file_path, "/"))
   })
   output$bam_files <- renderUI({
-    checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
-                                                      Bam FIles"),
-                       choices = found_bam_files(), 
-                       selected = found_bam_files()[1])   
+    
+    if (class(found_bam_files())=='data.frame'){
+      checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
+                                                        Bam FIles"),
+                         choices = found_bam_files()[[1]], 
+                         selected = found_bam_files()[[1]][1]) 
+      #Goes into the data frame and gets the file paths corresponding 
+      #to the selected BAM files
+      print(found_bam_files())
+      return(found_bam_files()[3,paste(input$select_bam_files)])
+    }
+    else{
+      checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
+                                                        Bam FIles"),
+                         choices = found_bam_files(), 
+                         selected = found_bam_files()[1])  
+    }
   })
   processed_gff <- reactive({
     withProgress(message = 'Processing the gff file, this may take a few seconds.',
@@ -76,7 +88,7 @@ shinyServer(function(input, output, session) {
   poly_a_counts<- reactive({
  
     initial_table <- get_a_counts (input$file_path, gffInput(),input$select_bam_files,
-                                   input$select_genes,group_list())
+                                   group_list())
     subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >= 
                                             input$ad_slider&
                                             initial_table$width >=
@@ -84,6 +96,10 @@ shinyServer(function(input, output, session) {
                                             initial_table$width <=
                                             input$al_length[2],]
   })
+ output$means_frame <- renderDataTable({
+    make_means_and_meds_frame(poly_a_counts())
+  })
+  
   output$print_poly_a_counts <- renderDataTable({
     poly_a_counts()    
   })
@@ -113,7 +129,7 @@ shinyServer(function(input, output, session) {
       paste(trim(input$select_genes), '.eps', sep='')
     },
     content = function(file){
-      setEPS(width = 10, family = "Liberation Sans")
+      setEPS(width = 10)
       postscript(file)
       plot_calcs2()     
       dev.off() 
