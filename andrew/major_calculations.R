@@ -268,20 +268,36 @@ modify_gff_inplace <- function (gff_file) {
 make_means_and_meds_frame <- function (poly_a_counts){
   print(poly_a_counts[1,"group"])
     if (poly_a_counts[1,"group"]== "group NULL"){
-      into_samples <- split(poly_a_counts, poly_a_counts$sample)
+      into_samples <- split(poly_a_counts, 
+                            list(poly_a_counts$sample, poly_a_counts$gene_or_peak_name))
       mm_frame <- data.frame()
+      print(str(into_samples ))
       for (sample in into_samples){
         print(str(sample$number_of_as))
         sample_mean <- mean(sample$number_of_as, na.rm =T)
         print(sample_mean)
         sample_median <- median(sample$number_of_as, na.rm =T)
-        to_bind <- cbind(sample[1, "sample"],sample_mean, sample_median)
+        name <- paste(sample[1, "sample"], sample[1, "gene_or_peak_name"])
+        to_bind <- cbind(name,sample_mean, sample_median)
         mm_frame <- rbind(mm_frame,to_bind)
       }
-      colnames (mm_frame) <- c("Sample Name", "Mean Poly (A)-Tail Length", "Median Poly (A)-Tail Length")
-    return(mm_frame)
+      
+      }
+  else{
+    into_samples <- split(poly_a_counts, poly_a_counts$group)
+    mm_frame <- data.frame()
+    for (sample in into_samples){
+      print(str(sample$number_of_as))
+      sample_mean <- mean(sample$number_of_as, na.rm =T)
+      print(sample_mean)
+      sample_median <- median(sample$number_of_as, na.rm =T)
+      to_bind <- cbind(sample[1, "group"],sample_mean, sample_median)
+      mm_frame <- rbind(mm_frame,to_bind)
     }
- }
+  }  
+  colnames (mm_frame) <- c("Sample Name", "Mean Poly (A)-Tail Length", "Median Poly (A)-Tail Length")
+  return(mm_frame)
+}
   
 #}
 
