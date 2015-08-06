@@ -44,8 +44,14 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
     }  
     par(bty="l", ps = 10, mar=c(5.1,4.1,4.1,8.1), xpd =T)
     if(alt_plot){
-      if (length(samples)>1){
+      if (length(samples) == 1){
+        par(mfrow= c(1,1))
+      }
+      else if ((length(samples)/2)%%1 == 0){
         par(mfrow= c(as.integer(length(samples)/2),2))
+      }
+      else{
+        par(mfrow= c(as.integer(length(samples)/2)+1,2))        
       }
       for (sample in samples) {
         points <- data.frame(sample$width, sample$number_of_as)

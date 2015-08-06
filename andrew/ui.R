@@ -19,7 +19,7 @@ shinyUI(fluidPage(
                                          Separated by a Space"),
                                          value = "Peak1873"),
     uiOutput("gff_files"),
-    checkboxInput("alt_plot", label = "Poly (A) Pileup", value = T),
+    checkboxInput("alt_plot", label = "Poly (A) Pileup", value = F),
     conditionalPanel(
       condition = "input.alt_plot == true",
       checkboxInput("order_alt", label = "Order Reads By Width and then Poly (A) Tail Length", value = T) 

@@ -42,7 +42,7 @@ shinyServer(function(input, output, session) {
   })
   processed_gff <- reactive({
     withProgress(message = 'Processing the gff file, this may take a few seconds.',
-                 detail = 'This only happens once.', value = 0,{
+                 detail = 'This only happens once.', value = 0,{   
                    if (substring(input$gff_select,1,1)=="/"){
                     modify_gff_inplace(paste(input$gff_select))
                    }
@@ -86,6 +86,9 @@ shinyServer(function(input, output, session) {
  
   
   poly_a_counts<- reactive({
+    withProgress(message = 'Processing the bam files.',
+                 detail = 'This will take longer if there are a lot of reads.', 
+                 value = 0,{  
  
     initial_table <- get_a_counts (input$file_path, gffInput(),input$select_bam_files,
                                    group_list())
@@ -95,6 +98,7 @@ shinyServer(function(input, output, session) {
                                             input$al_length[1]&
                                             initial_table$width <=
                                             input$al_length[2],]
+                 })
   })
  output$means_frame <- renderDataTable({
     make_means_and_meds_frame(poly_a_counts())
