@@ -25,6 +25,7 @@ shinyUI(fluidPage(
       checkboxInput("order_alt", label = "Order Reads By Width and then Poly (A) Tail Length", value = T) 
       
     ),
+    checkboxInput("all_reads", label = "Include Non-Poly (A) Reads", value = F),
     checkboxInput("merge", label = "Merge Replicates", value = F),
     conditionalPanel(
     condition = "input.merge == false",

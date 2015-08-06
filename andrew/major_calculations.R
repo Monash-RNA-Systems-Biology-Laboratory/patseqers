@@ -175,6 +175,7 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
       result [[1]][[5]][[2]] <- rep('F', length(result [[1]][[5]][[1]]))      
     }
     single_bam_frame <-  data.frame(result) 
+    test2 <<- single_bam_frame
     colnames(single_bam_frame)<- c("qname", "strand", "pos", 
                                    "width", "number_of_as", "number_of_ad_bases")
     #If the read is on the forward strand, add width to pos to obtain 3' end. 
@@ -197,20 +198,26 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 
-names_string <- function(s_frame, groups){
+names_string <- function(s_frame, groups, all_reads){
   # The data frame is split by samples here
   to_print <- character()
   for (frame in s_frame){
     #The data frame is split into genes here
       split_peaks <- split(frame ,frame$gene_or_peak_name, drop =T)
     for (peak_frame in split_peaks){
+      if (all_reads == T){
+        tail_reads <- " "        
+      }
+      else{
+        tail_reads <- " with a poly (A)-tail "
+      }      
       
       if (groups == T){
-        str <- paste("The number of reads with a poly (A)-tail is ", peak_frame$group[1]," ",
+        str <- paste("The number of reads ",tail_reads,"for ", peak_frame$group[1]," ", 
                      peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
       }
       else{
-        str <- paste("The number of reads with a poly (A)-tail is ", peak_frame$sample[1]," ",
+        str <- paste("The number of reads",tail_reads,"for ",  peak_frame$sample[1]," ",
                      peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
       }
       to_print <- c(to_print, str)

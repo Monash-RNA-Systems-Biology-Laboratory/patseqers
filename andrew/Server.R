@@ -92,12 +92,18 @@ shinyServer(function(input, output, session) {
  
     initial_table <- get_a_counts (input$file_path, gffInput(),input$select_bam_files,
                                    group_list())
-    subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >= 
-                                            input$ad_slider&
-                                            initial_table$width >=
-                                            input$al_length[1]&
-                                            initial_table$width <=
-                                            input$al_length[2],]
+    if (input$all_reads ==F){      
+      subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >=            
+                                              input$ad_slider&
+                                              initial_table$width >=
+                                              input$al_length[1]&
+                                              initial_table$width <=
+                                              input$al_length[2],]
+                            }
+    else{
+      subsetted_by_sliders <- initial_table
+    
+    }
                  })
   })
  output$means_frame <- renderDataTable({
@@ -114,7 +120,7 @@ shinyServer(function(input, output, session) {
   output$gene_info <- renderText({
     full_df <- poly_a_counts()  
     split_frame <- split(full_df, full_df$sample)
-    names_string (split_frame, input$merge) 
+    names_string (split_frame, input$merge, input$all_reads) 
   })
   plot_calcs <- reactive({
     make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, 
