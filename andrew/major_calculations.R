@@ -91,13 +91,14 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       }
       
     }
+    # This loop makes a list for the legend. 
     leg_names <- list()
     for (name in names(samples)){
-      leg_names <-c(leg_names, paste(name, names(split_peak)))
+      leg_names <- c(leg_names, paste(name, names(split_peak)))
       
     }
-    
     if (leg ==T){ 
+      print(str(leg_names))
       x_offset <-  length(strsplit(paste(leg_names), "")[[1]])
       legend(ranges[2]-30-(x_offset)*2,110 +(length(samples)*-0.8), 
              legend = leg_names, fill = colours, bty ="n")
@@ -132,12 +133,12 @@ filter_gff_for_rows<- function (gff,names){
 }
 
 # This function gets the poly (A) counts for all given gff rows
-get_a_counts <- function(bam_file_path,gff_rows, bam_files, groups){
+get_a_counts <- function(bam_file_path,gff_rows, bam_files, groups, names_from_json){
   reads_report <- data.frame() 
 
   for (gff_row in 1:nrow(gff_rows)){
     counts_frame <- get_a_counts_gff_row(bam_file_path, gff_rows[gff_row,], 
-                                         bam_files, groups)
+                                         bam_files, groups, names_from_json)
     counts_frame$gene_or_peak_name <- gff_rows[gff_row, 'input_gene_or_peak']
     reads_report <-rbind(reads_report,counts_frame)      
   }
@@ -145,7 +146,7 @@ get_a_counts <- function(bam_file_path,gff_rows, bam_files, groups){
 }
 
 
-get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
+get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups,names_from_json){
   if (peak[,"Orientation"]== "-"){
     ori <- TRUE    
   }
@@ -172,7 +173,7 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
     #If not, I make a fake one of NAs.
     
     if (length(result [[1]][[5]][[2]])!= length(result [[1]][[5]][[1]])){
-      result [[1]][[5]][[2]] <- rep('F', length(result [[1]][[5]][[1]]))      
+      result [[1]][[5]][[2]] <- rep(0, length(result [[1]][[5]][[1]]))      
     }
     single_bam_frame <-  data.frame(result) 
     test2 <<- single_bam_frame
@@ -185,7 +186,12 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups){
     single_bam_frame <- single_bam_frame[single_bam_frame$pos >= 
                                            peak[,'Peak_Start']& 
                                            single_bam_frame$pos <= peak[,'Peak_End'] ,]
-    single_bam_frame$sample <- paste(bam_file)
+    if (substring(bam_file,1,1)=="/"){
+      single_bam_frame$sample <-  names_from_json$name [names_from_json$bam ==paste(bam_file)]
+    }
+    else{
+      single_bam_frame$sample <- paste(bam_file)
+    }
     single_bam_frame$group<- paste("group", groups[count])
     bam_frame <- rbind(bam_frame,single_bam_frame)
     count <- count +1

@@ -29,9 +29,7 @@ shinyServer(function(input, output, session) {
                          choices = found_bam_files()[[1]], 
                          selected = found_bam_files()[[1]][1]) 
       #Goes into the data frame and gets the file paths corresponding 
-      #to the selected BAM files
-      print(found_bam_files())
-      return(found_bam_files()[3,paste(input$select_bam_files)])
+      #to the selected BAM files      
     }
     else{
       checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
@@ -39,17 +37,18 @@ shinyServer(function(input, output, session) {
                          choices = found_bam_files(), 
                          selected = found_bam_files()[1])  
     }
+   
   })
   processed_gff <- reactive({
     withProgress(message = 'Processing the gff file, this may take a few seconds.',
                  detail = 'This only happens once.', value = 0,{   
                    if (substring(input$gff_select,1,1)=="/"){
-                    modify_gff_inplace(paste(input$gff_select))
+                     modify_gff_inplace(paste(input$gff_select))
                    }
                    else{
-                    modify_gff_inplace(paste("./", input$file_path,"/", input$gff_select,sep=""))
-                  }
-      
+                     modify_gff_inplace(paste("./", input$file_path,"/", input$gff_select,sep=""))
+                   }
+                   
                  }
     )
   })
@@ -58,55 +57,64 @@ shinyServer(function(input, output, session) {
   })
   
   gffInput <- reactive({
-  filter_gff_for_rows(processed_gff(), input$select_genes)
+    filter_gff_for_rows(processed_gff(), input$select_genes)
   })
   output$gff_rows<- renderDataTable({
     gffInput () 
   })
-
-    select_group_fun <- reactive({
-      count <- 1
-      lapply(input$select_bam_files, 
-        function(i) {          
-            selectInput(paste0('snumber', i),              
-            h5(paste0('Select a group for ', i)),
-            choices = 1:length(input$select_bam_files))
-        }
-      )
-    })
- output$select_group <- renderUI({
-   select_group_fun()
+  
+  select_group_fun <- reactive({
+    count <- 1
+    lapply(input$select_bam_files, 
+           function(i) {          
+             selectInput(paste0('snumber', i),              
+                         h5(paste0('Select a group for ', i)),
+                         choices = 1:length(input$select_bam_files))
+           }
+    )
+  })
+  output$select_group <- renderUI({
+    select_group_fun()
   })    
- group_list <- reactive({
-   res <- lapply(input$select_bam_files, 
-                 function(i) { 
-                   input[[paste0('snumber', i)]]
-                 })
- })
- 
+  group_list <- reactive({
+    res <- lapply(input$select_bam_files, 
+                  function(i) { 
+                    input[[paste0('snumber', i)]]
+                  })
+  })
+  
   
   poly_a_counts<- reactive({
+    if (class(found_bam_files())=='data.frame'){
+      bam_files <- found_bam_files()$bam [found_bam_files()$name ==input$select_bam_files]
+    }
+    else{
+      bam_files <- input$select_bam_files
+    }
+    print(bam_files)
     withProgress(message = 'Processing the bam files.',
                  detail = 'This will take longer if there are a lot of reads.', 
                  value = 0,{  
- 
-    initial_table <- get_a_counts (input$file_path, gffInput(),input$select_bam_files,
-                                   group_list())
-    if (input$all_reads ==F){      
-      subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >=            
-                                              input$ad_slider&
-                                              initial_table$width >=
-                                              input$al_length[1]&
-                                              initial_table$width <=
-                                              input$al_length[2],]
-                            }
-    else{
-      subsetted_by_sliders <- initial_table
-    
-    }
+                   
+                   initial_table <- get_a_counts (input$file_path, gffInput(),bam_files,
+                                                  group_list(),found_bam_files())
+                   print(str(initial_table))
+                   if (input$all_reads ==F){      
+                     subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >=            
+                                                             input$ad_slider&
+                                                             initial_table$number_of_as > 0 &
+                                                             initial_table$width >=
+                                                             input$al_length[1]&
+                                                             initial_table$width <=
+                                                             input$al_length[2],]
+                   }
+                   else{
+                     subsetted_by_sliders <- initial_table
+                     
+                   }
                  })
   })
- output$means_frame <- renderDataTable({
+  output$means_frame <- renderDataTable({
     make_means_and_meds_frame(poly_a_counts())
   })
   
@@ -116,7 +124,7 @@ shinyServer(function(input, output, session) {
   output$n_reps<- renderText ({
     input$n_replicates   
   })
-
+  
   output$gene_info <- renderText({
     full_df <- poly_a_counts()  
     split_frame <- split(full_df, full_df$sample)
@@ -127,7 +135,7 @@ shinyServer(function(input, output, session) {
               input$merge, input$alt_plot, input$order_alt)
   })    
   output$scp_plot<- renderPlot({  
-      plot_calcs()
+    plot_calcs()
   })
   #Workaround for a shiny bug thatdoesn't handle reactive plots well. 
   plot_calcs2 <- function(){
@@ -143,8 +151,8 @@ shinyServer(function(input, output, session) {
       postscript(file)
       plot_calcs2()     
       dev.off() 
+      
+    })
+  
   
   })
-
-  
-})
