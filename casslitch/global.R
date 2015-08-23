@@ -1,5 +1,5 @@
-library(biomaRt)
-ensembl = useMart("ensembl",dataset="celegans_gene_ensembl")
+#library(biomaRt)
+#ensembl = useMart("ensembl",dataset="celegans_gene_ensembl")
 
 #csvs
 df_info<-read.csv("genewise-info.csv")
@@ -93,51 +93,62 @@ get_genes_GO<-function(GO_term){
   return(genes)
 }
 
-#find genes from FILE
-
-#read in file containing genes to be found
-file<-read.csv("887 RBPs- TableS2.csv")
-
-#get all WBIDs as strings
-gene_id<-lapply(file[,"WBID..WS219."],as.character)
-
-#based on WB ids in file, find either NM code + ORF
-genes<-getBM(attributes = c("ensembl_gene_id","refseq_mrna","wormbase_gene_seq_name") , filters = c("ensembl_gene_id"), values=gene_id, mart = ensembl)
-
-#which WBIDs biomart failed to find find NM code or ORF (=genes)
-not_found<-c()
-for(i in gene_id){
-  if(!(i %in% genes[,1]))
-    not_found<-c(not_found,i)
-}
-
-#using ORF from our file for unmatched WBIDs, does they match genewise info file? - nope. Ignore.
-for(i in not_found){
-  for(a in df_info$gene)
-    if(grepl(i,a))
-      print("some genes may be missing!!")
-}
-
-#1 means NR matches NR in our data
-for(i in 1:length(genes$refseq_mrna)){
-  if(!(genes[i,"refseq_mrna"] %in% df_info$Name))
-    genes[i,"NR"]<-0
-  else
-    genes[i,"NR"]<-1
-}
-
-#1 means ORF matches ORF in our data
-for(i in 1:length(genes$wormbase_gene_seq_name)){
-  if(!(genes[i,"wormbase_gene_seq_name"] %in% df_info$gene))
-    genes[i,"ORF"]<-0
-  else
-    genes[i,"ORF"]<-1
-}
-
-
-#NR match df
-NR_df<-subset(genes,genes$NR==1)
-
-#ORF match df
-ORF_df<-subset(genes,genes$ORF==1&genes$refseq_mrna=="")
-
+# #find genes from FILE
+# 
+# #read in file containing genes to be found
+# file<-read.csv("887 RBPs- TableS2.csv")
+# 
+# #get all WBIDs as strings
+# gene_id<-lapply(file[,"WBID..WS219."],as.character)
+# 
+# #based on WB ids in file, find either NM code + ORF
+# genes<-getBM(attributes = c("ensembl_gene_id","refseq_mrna","wormbase_gene_seq_name") , filters = c("ensembl_gene_id"), values=gene_id, mart = ensembl)
+# 
+# #which WBIDs biomart failed to find find NM code or ORF (=genes)
+# not_found<-c()
+# for(i in gene_id){
+#   if(!(i %in% genes[,1]))
+#     not_found<-c(not_found,i)
+# }
+# 
+# #using ORF from our file for unmatched WBIDs, does they match genewise info file? - nope. Ignore.
+# for(i in not_found){
+#   for(a in df_info$gene)
+#     if(grepl(i,a))
+#       print("some genes may be missing!!")
+# }
+# 
+# #1 means NR matches NR in our data
+# for(i in 1:length(genes$refseq_mrna)){
+#   if(!(genes[i,"refseq_mrna"] %in% df_info$Name))
+#     genes[i,"NR"]<-0
+#   else
+#     genes[i,"NR"]<-1
+# }
+# 
+# #1 means ORF matches ORF in our data
+# for(i in 1:length(genes$wormbase_gene_seq_name)){
+#   if(!(genes[i,"wormbase_gene_seq_name"] %in% df_info$gene))
+#     genes[i,"ORF"]<-0
+#   else
+#     genes[i,"ORF"]<-1
+# }
+# 
+# 
+# #NR match df
+# NR_df<-subset(genes,genes$NR==1)
+# 
+# #ORF match df
+# ORF_df<-subset(genes,genes$ORF==1&genes$refseq_mrna=="")
+# 
+# 
+# 
+# 
+# 
+# # flt <-
+# #   reactive({
+# #     flt.df <-
+# #       data.frame(csvmd()[apply(csvmd(),1,function(row) {
+# #         any(row >= input$nMin)
+# #       }),])
+# #   })

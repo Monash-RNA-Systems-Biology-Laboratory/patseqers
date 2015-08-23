@@ -4,12 +4,12 @@ library(biomaRt)
 
 
 shinyServer(function(input,output,session){
-  #funtions returning user inputs
-   selectionX<-reactive({
+  
+    selectionX<-reactive({
       return(input$sampleX)
     })
-   
-   selectionY<-reactive({
+    
+    selectionY<-reactive({
       return(input$sampleY)
     })
     
@@ -17,7 +17,7 @@ shinyServer(function(input,output,session){
       return(input$GOterm)
     })
   
-   productt<-reactive({
+  productt<-reactive({
      return(input$productterm)
    })
    
@@ -25,42 +25,30 @@ shinyServer(function(input,output,session){
     return(input$bygene)
   })
   
-  dfxtype<-reactive({
-    return(input$dfxtype)
+  dataframx<-reactive({
+    return(input$dataframx)
   })
   
-  dfytype<-reactive({
-    return(input$dfytype)
+  dataframy<-reactive({
+    return(input$dataframy)
   })
-  
   
   output$distPlot <- renderPlot({
+    #ensembl = useMart("ensembl",dataset="scerevisiae_gene_ensembl")
     
-      #turning shiny user inputs into variables
       df1<-genewise_exp
-      dafx<-dfxtype()
-      dafy<-dfytype()
+      dafx<-dataframx()
+      dafy<-dataframy()
       selX<-selectionX()
       selY<-selectionY()
       dfx<-get(dafx)
       dfy<-get(dafy)
-      Gts<-GOt()
       
-      #base plot
-      plot_out<-ggplot(df1,aes_string(x=dfx[selX],y=dfy[selY]))+geom_point()
-      plot_out<-plot_out+labs(x=paste(dafx,selX),y=paste(dafy,selY))
-      plot_out<-plot_out+theme_bw()
-      
-    
-      
-      #creating data frame for plotting given GOterm
       GO_data<-function(GOterm){
         genes<-get_genes_GO(GOterm)
         df<-data.frame(genes,selectionX=0,selectionY=0, GOterm,row.names=1)
         colnames(df)<-c(selX,selY,"ID")
         
-        #with isoforms
-        if(input$isoforms){
         for(gene in rownames(df)){
           for(i in rownames(dfx)){
             if(grepl(gene,i)){
@@ -71,22 +59,19 @@ shinyServer(function(input,output,session){
                   df[i,3]<-GOterm
                }
             }
-          }}}
+          }}
         
-        #without isoforms
-        else{
-        for(gene in rownames(df)){
-          if ((gene %in% rownames(dfx))){
-            if ((gene %in% rownames(dfy))){
-            df[gene,1]<- dfx[gene,selX]
-            df[gene,2]<- dfy[gene,selY]
-          }
-          }
-        }}
+#         for(gene in rownames(df)){
+#           if ((gene %in% rownames(dfx))){
+#             if ((gene %in% rownames(dfy))){
+#             df[gene,1]<- dfx[gene,selX]
+#             df[gene,2]<- dfy[gene,selY]
+#           }
+#           }
+#         }
         return(df)
       }
-
-      #creating data frame for plotting given product term
+      
       product_data<-function(keyterm){
         genes<-get_genes(keyterm,df_info,"product")
         df<-data.frame(genes,selectionX=0,selectionY=0, keyterm,row.names=1)
@@ -102,35 +87,15 @@ shinyServer(function(input,output,session){
         }
         return(df)
       }
-
- 
-    #create data frame given file with genes to be hightlighted
-      RBP_data<-function(){
-        genes<-lapply(NR_df[,"refseq_mrna"],as.character)
-        genes<-unlist(genes)
-        product<-lapply(df_info[,"gene"],as.character)
-        df<-data.frame(genes,selectionX=0,selectionY=0,row.names=1)
-        colnames(df)<-c(selX,selY)
-        
-        for(i in ORF_df$wormbase_gene_seq_name){
-          for(a in 1:length(product)){
-            if(product[a] == i)
-              genes<-c(genes,df_info[a,"Name"])}
-        }
-        
-        for(gene in rownames(df)){
-          if ((gene %in% rownames(dfx))){
-            if ((gene %in% rownames(dfy))){
-              df[gene,1]<- dfx[gene,selX]
-              df[gene,2]<- dfy[gene,selY]
-            }
-          }
-        }
-        return(df)
-      }
+      
+      
+    plot_out<-ggplot(df1,aes_string(x=dfx[selX],y=dfy[selY]))+geom_point()
+    plot_out<-plot_out+labs(x=paste(dafx,selX),y=paste(dafy,selY))
+    
+    Gts<-GOt()
       
     #plot GO terms
-     if(Gts!=""){
+     if(Gts!="None"){
       GO_terms<-strsplit(Gts,",")[[1]]
       for(GO_ID in GO_terms){
         df2<-GO_data(GO_ID)
@@ -140,7 +105,7 @@ shinyServer(function(input,output,session){
       
     #plot product description key terms
     pterm<-productt()
-      if(pterm!=""){
+      if(pterm!="None"){
         p_terms<-strsplit(pterm,",")[[1]]
         for(pm in p_terms){
          df5<-product_data(pm)
@@ -148,40 +113,18 @@ shinyServer(function(input,output,session){
         }
         }
     
-    #highlight given gene yellow (or start of gene name)
+      #one gene
     gene1<-searchterm()
-    if(gene1!=""){
+    if(gene1!="Enter a gene"){
       genes1<-get_genes(gene1,df_info,"gene")
       for(gene in genes1){
-          plot_out<-plot_out+geom_point(data=df1,aes_string(x=dfx[gene,selX],y=dfy[gene,selY]),colour="yellow", size=3.0)
-        }
-      
-        }
-  
-    #plot genes from file
-    df6<-RBP_data()
-    plot_out<-plot_out+geom_point(data=df6,aes_string(x=df6[1],y=df6[2]),colour="red")
-   
-    
-    #p-value
-    if(dafy=="genewise_tail_length" & dafx=="genewise_tail_length"){
-      diff_all<-log2(dfx[selX]+0.5)-log2(dfy[selY]+0.5)
-      diff_adele<-log2(df6[selX]+0.5)-log2(df6[selY]+0.5)
-      p_val<-t.test(diff_all[1],diff_adele[1])
-      p_val<-p_val[[3]] #get pvalue
-      print(p_val)
-      plot_out<-plot_out+annotate(geom="text", x=20, y=90, label=paste0("p-value = ",round(p_val,digits=4)), color="black")
+        plot_out<-plot_out+geom_point(data=df1,aes_string(x=dfx[gene,selX],y=dfy[gene,selY]),colour="yellow", size=3.0)
       }
-    
-    #blue line
-    if(dafx==dafy)
-      plot_out<-plot_out+geom_abline(colour="blue",size=1.0)
+      }
     
       plot(plot_out)
     })
   
-  
-  #download plot
   output$downloadPlot<-downloadHandler(
     filename = function(){
       "file.pdf"
@@ -190,7 +133,8 @@ shinyServer(function(input,output,session){
     content = function(file){
       ggsave(file)
     }
-  )
+      )
+    
 })
 
 
