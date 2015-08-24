@@ -1,5 +1,5 @@
-#library(biomaRt)
-#ensembl = useMart("ensembl",dataset="celegans_gene_ensembl")
+library(biomaRt)
+ensembl = useMart("ensembl",dataset="celegans_gene_ensembl")
 
 #csvs
 df_info<-read.csv("genewise-info.csv")
@@ -140,15 +140,13 @@ get_genes_GO<-function(GO_term){
 # 
 # #ORF match df
 # ORF_df<-subset(genes,genes$ORF==1&genes$refseq_mrna=="")
-# 
-# 
-# 
-# 
-# 
-# # flt <-
-# #   reactive({
-# #     flt.df <-
-# #       data.frame(csvmd()[apply(csvmd(),1,function(row) {
-# #         any(row >= input$nMin)
-# #       }),])
-# #   })
+
+
+
+# flt <-
+#   reactive({
+#     flt.df <-
+#       data.frame(csvmd()[apply(csvmd(),1,function(row) {
+#         any(row >= input$nMin)
+#       }),])
+#   })
