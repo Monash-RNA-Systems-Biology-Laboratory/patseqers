@@ -7,7 +7,7 @@ shinyServer(function(input, output, session) {
   output$select_file_path <- renderUI({
     selectInput("file_path", label = h4("Select a dataset"), 
                 choices = list.dirs(full.names=F, recursive =F), 
-                selected =  list.dirs(full.names=F, recursive =F)[9])   
+                selected =  list.dirs(full.names=F, recursive =F)[1])   
   })
   
   found_gff_files <- reactive({

@@ -56,18 +56,27 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       for (sample in samples) {
         points <- data.frame(sample$width, sample$number_of_as)
         ymax <- nrow(points)  
-    
+        count <- 1:ymax
+        
         plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
-             main= paste(sample[1,'sample']))
-        for (i in 1:ymax){
-          segments(x0= 0, y0= i,x1= points[i,1], col="purple")
-          segments(x0= points[i,1], y0= i,x1= points[i,1] +points[i,2] , col="pink")
-          
-        }
+        main= paste(sample[1,'sample']))
+        
+        lines(points[,1],count, col = "purple")
+        
+        lines(points[,1]+ points[,2], count, col = "blue")
+#         plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
+#              main= paste(sample[1,'sample']))
+#         for (i in 1:ymax){
+#           segments(x0= 0, y0= i,x1= points[i,1], col="purple")
+#           segments(x0= points[i,1], y0= i,x1= points[i,1] +points[i,2] , col="pink")
+#           
+#         }
+      legend(y = ymax+38,x = ranges[2]-55, 
+             legend = c("3' UTR Length", "3' UTR Length + Poly (A)-Tail Length"), 
+             fill = c("purple", "blue"), bty ="n")
     }
   }
-  else{
-    
+  else{    
     
     dummy_ecdf <- ecdf(1:10)
     curve((-1*dummy_ecdf(x)*100)+100, from=ranges[1], to=ranges[2], 
