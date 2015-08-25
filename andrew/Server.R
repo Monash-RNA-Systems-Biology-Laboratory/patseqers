@@ -98,20 +98,16 @@ shinyServer(function(input, output, session) {
                    
                    initial_table <- get_a_counts (input$file_path, gffInput(),bam_files,
                                                   group_list(),found_bam_files())
-                   print(str(initial_table))
-                   if (input$all_reads ==F){      
-                     subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >=            
-                                                             input$ad_slider&
-                                                             initial_table$number_of_as > 0 &
-                                                             initial_table$width >=
-                                                             input$al_length[1]&
-                                                             initial_table$width <=
-                                                             input$al_length[2],]
+                   initial_table[is.na(initial_table)]<-0
+                   if (input$all_reads ==F){  
+                     initial_table <- initial_table[initial_table$number_of_as > 0,]
                    }
-                   else{
-                     subsetted_by_sliders <- initial_table
-                     
-                   }
+               subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >=            
+                                       input$ad_slider&
+                                       initial_table$width >=
+                                       input$al_length[1]&
+                                       initial_table$width <=
+                                       input$al_length[2],]                        
                  })
   })
   output$means_frame <- renderDataTable({
@@ -132,7 +128,7 @@ shinyServer(function(input, output, session) {
   })
   plot_calcs <- reactive({
     make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, 
-              input$merge, input$alt_plot, input$order_alt)
+              input$merge, input$alt_plot, input$order_alt, input$alt_cumu_dis)
   })    
   output$scp_plot<- renderPlot({  
     plot_calcs()
