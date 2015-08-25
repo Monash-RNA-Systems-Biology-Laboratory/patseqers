@@ -23,7 +23,7 @@ find_gff_files <- function(file_path) {
   return(gff_files)
 }
 
-make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_alt){
+make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_alt, show_poly_a =F){
   if(order_alt==T){
     new_frame <- processed_frame[
       with(processed_frame,order(
@@ -44,38 +44,45 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
     }  
     par(bty="l", ps = 10, mar=c(5.1,4.1,4.1,8.1), xpd =T)
     if(alt_plot){
-      if (length(samples) == 1){
-        par(mfrow= c(1,1))
+#       if (length(samples) == 1){
+#         par(mfrow= c(1,1))
+#       }
+#       else if ((length(samples)/2)%%1 == 0){
+#         par(mfrow= c(as.integer(length(samples)/2),2))
+#       }
+#       else{
+#         par(mfrow= c(as.integer(length(samples)/2)+1,2))        
+#       }
+      ymax <- 0
+      for (sample in samples){
+        title <- sample[1, 'gene_or_peak_name']
+       if (nrow (sample) > ymax){
+         ymax <- nrow(sample)
+       }
+        
       }
-      else if ((length(samples)/2)%%1 == 0){
-        par(mfrow= c(as.integer(length(samples)/2),2))
-      }
-      else{
-        par(mfrow= c(as.integer(length(samples)/2)+1,2))        
-      }
+         
+     
+      plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
+           main= title)
+      colours <- rainbow(length(samples))
+      col_count <- 1
       for (sample in samples) {
-        points <- data.frame(sample$width, sample$number_of_as)
-        ymax <- nrow(points)  
-        count <- 1:ymax
+        points <- data.frame(sample$width, sample$number_of_as) 
+        count <- 1:nrow(points)
         
-        plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
-        main= paste(sample[1,'sample']))
+        lines(points[,1],count,col = colours[col_count])
         
-        lines(points[,1],count, col = "purple")
-        
-        lines(points[,1]+ points[,2], count, col = "blue")
-#         plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
-#              main= paste(sample[1,'sample']))
-#         for (i in 1:ymax){
-#           segments(x0= 0, y0= i,x1= points[i,1], col="purple")
-#           segments(x0= points[i,1], y0= i,x1= points[i,1] +points[i,2] , col="pink")
-#           
-#         }
-      legend(y = ymax+38,x = ranges[2]-55, 
-             legend = c("3' UTR Length", "3' UTR Length + Poly (A)-Tail Length"), 
-             fill = c("purple", "blue"), bty ="n")
+        if (show_poly_a ==T){
+          lines(points[,1]+ points[,2], count, col = colours[col_count])  
+        }
+      col_count <- col_count +1
     }
+    legend(y = ymax+38,x = ranges[2]-55, 
+           legend = names(samples), 
+           fill = colours , bty ="n")
   }
+
   else{    
     
     dummy_ecdf <- ecdf(1:10)
@@ -107,7 +114,6 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       
     }
     if (leg ==T){ 
-      print(str(leg_names))
       x_offset <-  length(strsplit(paste(leg_names), "")[[1]])
       legend(ranges[2]-30-(x_offset)*2,110 +(length(samples)*-0.8), 
              legend = leg_names, fill = colours, bty ="n")
@@ -294,16 +300,12 @@ modify_gff_inplace <- function (gff_file) {
 }
 
 make_means_and_meds_frame <- function (poly_a_counts){
-  print(poly_a_counts[1,"group"])
     if (poly_a_counts[1,"group"]== "group NULL"){
       into_samples <- split(poly_a_counts, 
                             list(poly_a_counts$sample, poly_a_counts$gene_or_peak_name))
       mm_frame <- data.frame()
-      print(str(into_samples ))
       for (sample in into_samples){
-        print(str(sample$number_of_as))
         sample_mean <- mean(sample$number_of_as, na.rm =T)
-        print(sample_mean)
         sample_median <- median(sample$number_of_as, na.rm =T)
         name <- paste(sample[1, "sample"], sample[1, "gene_or_peak_name"])
         to_bind <- cbind(name,sample_mean, sample_median)
@@ -315,9 +317,7 @@ make_means_and_meds_frame <- function (poly_a_counts){
     into_samples <- split(poly_a_counts, poly_a_counts$group)
     mm_frame <- data.frame()
     for (sample in into_samples){
-      print(str(sample$number_of_as))
       sample_mean <- mean(sample$number_of_as, na.rm =T)
-      print(sample_mean)
       sample_median <- median(sample$number_of_as, na.rm =T)
       to_bind <- cbind(sample[1, "group"],sample_mean, sample_median)
       mm_frame <- rbind(mm_frame,to_bind)
