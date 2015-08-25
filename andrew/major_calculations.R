@@ -23,7 +23,7 @@ find_gff_files <- function(file_path) {
   return(gff_files)
 }
 
-make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_alt, show_poly_a =F){
+make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_alt, alt_cumu_dis, show_poly_a =F){
   if(order_alt==T){
     new_frame <- processed_frame[
       with(processed_frame,order(
@@ -62,12 +62,52 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
         
       }
          
-     
-      plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
-           main= title)
-      colours <- rainbow(length(samples))
+      if (alt_cumu_dis ==T) {
+        dummy_ecdf <- ecdf(1:10)
+        curve((-1*dummy_ecdf(x)*100)+100, from=ranges[1], to=ranges[2], 
+              col="white", xlim=ranges, main= paste(names),
+              axes=F, xlab= 'Length of Aligned Sequence', ylab = 'Percent Population (%)', ylim =c(0,100))
+        axis(1, pos=0, tick = 25)
+        axis(2, pos= 0, at= c(0,25,50,75,100), tick = 25) 
+        count <- 1  
+        for (df in samples){
+          split_peak <- split(df,df$gene_or_peak_name, drop =T)    
+          for(gene_or_peak in split_peak){  
+            colours <- rainbow(length(samples)*length(split_peak))
+    
+            ecdf_a <- ecdf(gene_or_peak[,"width"])
+            curve((-1*ecdf_a(x)*100)+100, from=ranges[1], to=ranges[2], 
+                  col=colours[count], xlim=ranges, main= paste(names),
+                  add=T)
+            count <- count +1     
+            
+          }
+          # This loop makes a list for the legend. 
+          leg_names <- list()
+          for (name in names(samples)){
+            leg_names <- c(leg_names, paste(name, names(split_peak)))
+            
+          }
+          if (leg ==T){ 
+            x_offset <-  length(strsplit(paste(leg_names), "")[[1]])
+            legend(ranges[2]-30-(x_offset)*2,110 +(length(samples)*-0.8), 
+                   legend = leg_names, fill = colours, bty ="n")
+          }
+          
+        }
+
+      }
+      else{
+        plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
+             main= title)
+  
+      
       col_count <- 1
-      for (sample in samples) {
+      for (df in samples){
+        split_peak <- split(df,df$gene_or_peak_name, drop =T)    
+        colours <- rainbow(length(samples)*length(split_peak))
+      for (sample in split_peak) {
+
         points <- data.frame(sample$width, sample$number_of_as) 
         count <- 1:nrow(points)
         
@@ -77,11 +117,20 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
           lines(points[,1]+ points[,2], count, col = colours[col_count])  
         }
       col_count <- col_count +1
+      }
+    
+    leg_names <- list()
+    for (name in names(samples)){
+      leg_names <- c(leg_names, paste(name, names(split_peak)))
+      
     }
-    legend(y = ymax+38,x = ranges[2]-55, 
-           legend = names(samples), 
-           fill = colours , bty ="n")
+    if (leg ==T){ 
+      legend(y = ymax+38,x = ranges[2]-55, 
+             legend = leg_names, fill = colours, bty ="n")
+    }
+      
   }
+      }}
 
   else{    
     
