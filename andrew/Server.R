@@ -37,7 +37,7 @@ shinyServer(function(input, output, session) {
                          choices = found_bam_files(), 
                          selected = found_bam_files()[1])  
     }
-   
+    
   })
   processed_gff <- reactive({
     withProgress(message = 'Processing the gff file, this may take a few seconds.',
@@ -91,7 +91,6 @@ shinyServer(function(input, output, session) {
     else{
       bam_files <- input$select_bam_files
     }
-    print(bam_files)
     withProgress(message = 'Processing the bam files.',
                  detail = 'This will take longer if there are a lot of reads.', 
                  value = 0,{  
@@ -99,15 +98,16 @@ shinyServer(function(input, output, session) {
                    initial_table <- get_a_counts (input$file_path, gffInput(),bam_files,
                                                   group_list(),found_bam_files())
                    initial_table[is.na(initial_table)]<-0
+                   
                    if (input$all_reads ==F){  
                      initial_table <- initial_table[initial_table$number_of_as > 0,]
                    }
-               subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >=            
-                                       input$ad_slider&
-                                       initial_table$width >=
-                                       input$al_length[1]&
-                                       initial_table$width <=
-                                       input$al_length[2],]                        
+                   subsetted_by_sliders <- initial_table[initial_table$number_of_ad_bases >=            
+                                                           input$ad_slider&
+                                                           initial_table$width >=
+                                                           input$al_length[1]&
+                                                           initial_table$width <=
+                                                           input$al_length[2],]                        
                  })
   })
   output$means_frame <- renderDataTable({
@@ -136,8 +136,38 @@ shinyServer(function(input, output, session) {
   #Workaround for a shiny bug thatdoesn't handle reactive plots well. 
   plot_calcs2 <- function(){
     make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, 
-              input$merge, input$alt_plot, input$order_alt)
+              input$merge, input$alt_plot, input$order_alt, input$alt_cumu_dis)
   }
+  selected_plot_points <- reactive({
+    input$plot_brush
+  })
+  output$seq_plot <- renderDataTable({
+    min_points <-selected_plot_points()$xmin
+    max_points <-selected_plot_points()$xmax
+    print(str(poly_a_counts()))
+    if (input$alt_plot ==F){
+      sequence <- poly_a_counts()$sequence[poly_a_counts()$number_of_as > min_points & poly_a_counts()$number_of_as < max_points]  
+      name <- poly_a_counts()$gene_or_peak_name[poly_a_counts()$number_of_as > min_points & poly_a_counts()$number_of_as < max_points] 
+      sample <- poly_a_counts()$sample[poly_a_counts()$number_of_as > min_points & poly_a_counts()$number_of_as < max_points]
+      
+    }
+    else{
+      sequence <- poly_a_counts()$sequence[poly_a_counts()$width > min_points & poly_a_counts()$width < max_points]  
+      name <- poly_a_counts()$gene_or_peak_name[poly_a_counts()$width > min_points & poly_a_counts()$width < max_points] 
+      sample <- poly_a_counts()$sample[poly_a_counts()$width > min_points & poly_a_counts()$width < max_points]
+    }
+    data.frame(sample, name, sequence)
+  })
+  
+  output$frame_type <-renderText({
+    if (input$alt_plot ==F){
+      return("Reads That Fall Within The Selected Poly (A)-Tail Lengths")
+    }
+    else{
+      return("Reads That Fall Within The Selected Read Lengths")      
+    }
+  }) 
+
   output$downloadPlot <- downloadHandler(
     filename = function(){
       paste(trim(input$select_genes), '.eps', sep='')
@@ -146,9 +176,6 @@ shinyServer(function(input, output, session) {
       setEPS(width = 10)
       postscript(file)
       plot_calcs2()     
-      dev.off() 
-      
-    })
-  
-  
-  })
+      dev.off()       
+    })  
+})

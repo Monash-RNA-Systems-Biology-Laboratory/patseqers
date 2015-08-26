@@ -39,99 +39,96 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
   if (group == T){
     samples <- split(new_frame, new_frame$group, drop =T)
   }
-    else {
-      samples <- split(new_frame, new_frame$sample, drop =T)    
-    }  
-    par(bty="l", ps = 10, mar=c(5.1,4.1,4.1,8.1), xpd =T)
-    if(alt_plot){
-#       if (length(samples) == 1){
-#         par(mfrow= c(1,1))
-#       }
-#       else if ((length(samples)/2)%%1 == 0){
-#         par(mfrow= c(as.integer(length(samples)/2),2))
-#       }
-#       else{
-#         par(mfrow= c(as.integer(length(samples)/2)+1,2))        
-#       }
-      ymax <- 0
-      for (sample in samples){
-        title <- sample[1, 'gene_or_peak_name']
-       if (nrow (sample) > ymax){
-         ymax <- nrow(sample)
-       }
-        
+  else {
+    samples <- split(new_frame, new_frame$sample, drop =T)    
+  }  
+  par(bty="l", ps = 10, mar=c(5.1,4.1,4.1,8.1), xpd =T)
+  if(alt_plot){
+    seq_to_plot <- get_plot_sequence(new_frame)
+    ymax <- 0
+    for (sample in samples){
+      title <- sample[1, 'gene_or_peak_name']
+      if (nrow (sample) > ymax){
+        ymax <- nrow(sample)
       }
-         
-      if (alt_cumu_dis ==T) {
-        dummy_ecdf <- ecdf(1:10)
-        curve((-1*dummy_ecdf(x)*100)+100, from=ranges[1], to=ranges[2], 
-              col="white", xlim=ranges, main= paste(names),
-              axes=F, xlab= 'Length of Aligned Sequence', ylab = 'Percent Population (%)', ylim =c(0,100))
-        axis(1, pos=0, tick = 25)
-        axis(2, pos= 0, at= c(0,25,50,75,100), tick = 25) 
-        count <- 1  
-        for (df in samples){
-          split_peak <- split(df,df$gene_or_peak_name, drop =T)    
-          for(gene_or_peak in split_peak){  
-            colours <- rainbow(length(samples)*length(split_peak))
+      
+    }
     
-            ecdf_a <- ecdf(gene_or_peak[,"width"])
-            curve((-1*ecdf_a(x)*100)+100, from=ranges[1], to=ranges[2], 
-                  col=colours[count], xlim=ranges, main= paste(names),
-                  add=T)
-            count <- count +1     
-            
-          }
-          # This loop makes a list for the legend. 
-          leg_names <- list()
-          for (name in names(samples)){
-            leg_names <- c(leg_names, paste(name, names(split_peak)))
-            
-          }
-          if (leg ==T){ 
-            x_offset <-  length(strsplit(paste(leg_names), "")[[1]])
-            legend(ranges[2]-30-(x_offset)*2,110 +(length(samples)*-0.8), 
-                   legend = leg_names, fill = colours, bty ="n")
-          }
+    if (alt_cumu_dis ==T) {
+      dummy_ecdf <- ecdf(1:10)
+      curve((-1*dummy_ecdf(x)*100)+100, from=ranges[1], to=ranges[2], 
+            col="white", xlim=ranges, main= paste(names),
+            axes=F, xlab= "Number of Bases", ylab = 'Percent Population (%)', ylim =c(0,100))
+      axis(1, pos=0, tick = 25)
+      axis(2, pos= 0, at= c(0,25,50,75,100), tick = 25) 
+      count <- 1  
+      for (df in samples){
+        split_peak <- split(df,df$gene_or_peak_name, drop =T)    
+        for(gene_or_peak in split_peak){  
+          colours <- rainbow(length(samples)*length(split_peak))
+          
+          ecdf_a <- ecdf(gene_or_peak[,"width"])
+          curve((-1*ecdf_a(x)*100)+100, from=ranges[1], to=ranges[2], 
+                col=colours[count], xlim=ranges, main= paste(names),
+                add=T)
+          count <- count +1     
           
         }
-
+        # This loop makes a list for the legend. 
+        leg_names <- list()
+        for (name in names(samples)){
+          leg_names <- c(leg_names, paste(name, names(split_peak)))
+          
+        }
+        if (leg ==T){ 
+          x_offset <-  length(strsplit(paste(leg_names), "")[[1]])
+          legend(ranges[2]-30-(x_offset)*2,110 +(length(samples)*-0.8), 
+                 legend = leg_names, fill = colours, bty ="n")
+        }
+        
       }
-      else{
-        plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
-             main= title)
-  
+      
+    }
+    else{
+      plot(NA,xlim=ranges, ylim = c(0, ymax), xlab= "Number of Bases", ylab = ylab, 
+           main= title)
+      
       
       col_count <- 1
       for (df in samples){
         split_peak <- split(df,df$gene_or_peak_name, drop =T)    
         colours <- rainbow(length(samples)*length(split_peak))
-      for (sample in split_peak) {
-
-        points <- data.frame(sample$width, sample$number_of_as) 
-        count <- 1:nrow(points)
-        
-        lines(points[,1],count,col = colours[col_count])
-        
-        if (show_poly_a ==T){
-          lines(points[,1]+ points[,2], count, col = colours[col_count])  
+        for (sample in split_peak) {
+          
+          points <- data.frame(sample$width, sample$number_of_as) 
+          count <- 1:nrow(points)
+          
+          lines(points[,1],count,col = colours[col_count])
+          
+          if (show_poly_a ==T){
+            lines(points[,1]+ points[,2], count, col = colours[col_count])  
+          }
+          col_count <- col_count +1
         }
-      col_count <- col_count +1
+        
+        leg_names <- list()
+        for (name in names(samples)){
+          leg_names <- c(leg_names, paste(name, names(split_peak)))
+          
+        }
+        if (leg ==T){ 
+          legend(y = ymax+38,x = ranges[2]-55, 
+                 legend = leg_names, fill = colours, bty ="n")
+        }
+        
       }
+      
+    }
+    #single_bases <- strsplit(seq_to_plot, "")
+    #axis(1, pos=-7,at = 1:nchar(seq_to_plot), labels = single_bases[[1]], lwd =0, cex.axis = 0.3) 
     
-    leg_names <- list()
-    for (name in names(samples)){
-      leg_names <- c(leg_names, paste(name, names(split_peak)))
-      
-    }
-    if (leg ==T){ 
-      legend(y = ymax+38,x = ranges[2]-55, 
-             legend = leg_names, fill = colours, bty ="n")
-    }
-      
   }
-      }}
-
+  
   else{    
     
     dummy_ecdf <- ecdf(1:10)
@@ -199,7 +196,7 @@ filter_gff_for_rows<- function (gff,names){
 # This function gets the poly (A) counts for all given gff rows
 get_a_counts <- function(bam_file_path,gff_rows, bam_files, groups, names_from_json){
   reads_report <- data.frame() 
-
+  
   for (gff_row in 1:nrow(gff_rows)){
     counts_frame <- get_a_counts_gff_row(bam_file_path, gff_rows[gff_row,], 
                                          bam_files, groups, names_from_json)
@@ -227,7 +224,7 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups,names_fro
       full_file_path <-paste(bam_file_path,"/", bam_file, sep ="")
     }
     
-    param <- ScanBamParam(what=c('qname','pos','qwidth','strand'),
+    param <- ScanBamParam(what=c('qname','pos','qwidth','strand', 'seq'),
                           tag=c('AN','AD'),flag=scanBamFlag(isMinusStrand=ori) , 
                           which=GRanges(peak [,'Chromosome'],IRanges(
                             peak[,'Peak_Start'], peak[,'Peak_End'] )))
@@ -236,13 +233,13 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups,names_fro
     # A check to make sure the adapter bases column is present. 
     #If not, I make a fake one of NAs.
     
-    if (length(result [[1]][[5]][[2]])!= length(result [[1]][[5]][[1]])){
-      result [[1]][[5]][[2]] <- rep(0, length(result [[1]][[5]][[1]]))      
+    if (length(result [[1]][[6]][[2]])!= length(result [[1]][[6]][[1]])){
+      result [[1]][[6]][[2]] <- rep(0, length(result [[1]][[6]][[1]]))      
     }
+    result[[1]][["seq"]] <- as.character(result[[1]][["seq"]])
     single_bam_frame <-  data.frame(result) 
-    test2 <<- single_bam_frame
     colnames(single_bam_frame)<- c("qname", "strand", "pos", 
-                                   "width", "number_of_as", "number_of_ad_bases")
+                                   "width", "sequence", "number_of_as", "number_of_ad_bases")
     #If the read is on the forward strand, add width to pos to obtain 3' end. 
     if (ori == FALSE ){
       single_bam_frame$pos <- single_bam_frame$pos+ single_bam_frame$width
@@ -273,7 +270,7 @@ names_string <- function(s_frame, groups, all_reads){
   to_print <- character()
   for (frame in s_frame){
     #The data frame is split into genes here
-      split_peaks <- split(frame ,frame$gene_or_peak_name, drop =T)
+    split_peaks <- split(frame ,frame$gene_or_peak_name, drop =T)
     for (peak_frame in split_peaks){
       if (all_reads == T){
         tail_reads <- " "        
@@ -298,7 +295,7 @@ names_string <- function(s_frame, groups, all_reads){
 modify_gff_inplace <- function (gff_file) {
   start_gff_file <- read.delim(gff_file, header=FALSE,
                                comment.char="",stringsAsFactors=F)
-
+  
   colnames(start_gff_file)<- c('Chromosome', 'Generated_By', 'Feature_Type', 
                                'Peak_Start','Peak_End','-',
                                'Orientation', '--','Information')
@@ -328,7 +325,7 @@ modify_gff_inplace <- function (gff_file) {
       next
     }
     if (plus_reads[row,'Peak_Start'] <= plus_reads[row-1,'Peak_End']){
-        plus_reads[row,'Peak_Start'] <- 
+      plus_reads[row,'Peak_Start'] <- 
         plus_reads[row-1,'Peak_End']+1 
     }
   }
@@ -338,10 +335,10 @@ modify_gff_inplace <- function (gff_file) {
     }
     if (minus_reads[row, 'Chromosome'] != minus_reads[row+1,'Chromosome']){
       next
-          
+      
     }
     if (minus_reads[row,'Peak_End'] >= minus_reads[row+1,'Peak_Start']){
-        minus_reads[row,'Peak_End'] <- minus_reads[row+1,'Peak_Start']-1 
+      minus_reads[row,'Peak_End'] <- minus_reads[row+1,'Peak_Start']-1 
     }
   }
   new_frame <- rbind(plus_reads, minus_reads)
@@ -349,19 +346,19 @@ modify_gff_inplace <- function (gff_file) {
 }
 
 make_means_and_meds_frame <- function (poly_a_counts){
-    if (poly_a_counts[1,"group"]== "group NULL"){
-      into_samples <- split(poly_a_counts, 
-                            list(poly_a_counts$sample, poly_a_counts$gene_or_peak_name))
-      mm_frame <- data.frame()
-      for (sample in into_samples){
-        sample_mean <- mean(sample$number_of_as, na.rm =T)
-        sample_median <- median(sample$number_of_as, na.rm =T)
-        name <- paste(sample[1, "sample"], sample[1, "gene_or_peak_name"])
-        to_bind <- cbind(name,sample_mean, sample_median)
-        mm_frame <- rbind(mm_frame,to_bind)
-      }
-      
-      }
+  if (poly_a_counts[1,"group"]== "group NULL"){
+    into_samples <- split(poly_a_counts, 
+                          list(poly_a_counts$sample, poly_a_counts$gene_or_peak_name))
+    mm_frame <- data.frame()
+    for (sample in into_samples){
+      sample_mean <- mean(sample$number_of_as, na.rm =T)
+      sample_median <- median(sample$number_of_as, na.rm =T)
+      name <- paste(sample[1, "sample"], sample[1, "gene_or_peak_name"])
+      to_bind <- cbind(name,sample_mean, sample_median)
+      mm_frame <- rbind(mm_frame,to_bind)
+    }
+    
+  }
   else{
     into_samples <- split(poly_a_counts, poly_a_counts$group)
     mm_frame <- data.frame()
@@ -375,8 +372,11 @@ make_means_and_meds_frame <- function (poly_a_counts){
   colnames (mm_frame) <- c("Sample Name", "Mean Poly (A)-Tail Length", "Median Poly (A)-Tail Length")
   return(mm_frame)
 }
-  
-#}
+
+get_plot_sequence <- function (reads_frame){
+  seqs <- as.character(reads_frame$sequence)
+  return (seqs[1])
+}
 
 
 
