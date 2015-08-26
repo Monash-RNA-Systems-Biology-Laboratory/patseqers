@@ -12,7 +12,7 @@ shinyUI(fluidPage(
            specific gene or peak, from the selected sample files."), br(),
   
   sidebarPanel(
-  
+    
     uiOutput("select_file_path"),
     textInput("select_genes", label = h5("Select Your 
                                          Favourite Gene(s) or a Peak(s) 
@@ -29,15 +29,15 @@ shinyUI(fluidPage(
     checkboxInput("all_reads", label = "Include Non-Poly (A) Reads", value = F),
     checkboxInput("merge", label = "Merge Replicates", value = F),
     conditionalPanel(
-    condition = "input.merge == false",
-    uiOutput("bam_files") 
-
+      condition = "input.merge == false",
+      uiOutput("bam_files") 
+      
     ),
     
     conditionalPanel(
       condition = "input.merge == true",   
       uiOutput("select_group")
-      ),
+    ),
     h3("save"),
     downloadButton("downloadPlot", label = "Download Plot"),
     
@@ -54,10 +54,12 @@ shinyUI(fluidPage(
     sliderInput("al_length", label= 'alignment length range', min=0, max=300,
                 value =c(0,300))
     
-    ),
+  ),
   mainPanel(
     h2("Plot Output",  height = "600"),   
-    plotOutput('scp_plot'),
+    plotOutput('scp_plot', brush = "plot_brush"),
+    textOutput('frame_type'),
+    dataTableOutput("seq_plot"),
     em(textOutput("gene_info")),
     textOutput('read_files'),
     textOutput('groups'),
@@ -75,4 +77,4 @@ shinyUI(fluidPage(
       dataTableOutput('print_poly_a_counts')
     )
   )
-    ))
+))
