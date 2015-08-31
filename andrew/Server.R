@@ -128,7 +128,7 @@ shinyServer(function(input, output, session) {
   })
   plot_calcs <- reactive({
     make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, 
-              input$merge, input$alt_plot, input$order_alt, input$alt_cumu_dis)
+              input$merge, input$alt_plot, input$order_alt, input$alt_cumu_dis, input$poly_a_pileup)
   })    
   output$scp_plot<- renderPlot({  
     plot_calcs()
@@ -136,7 +136,7 @@ shinyServer(function(input, output, session) {
   #Workaround for a shiny bug thatdoesn't handle reactive plots well. 
   plot_calcs2 <- function(){
     make_plot(poly_a_counts(), input$xslider,input$select_genes, input$legend, 
-              input$merge, input$alt_plot, input$order_alt, input$alt_cumu_dis)
+              input$merge, input$alt_plot, input$order_alt, input$alt_cumu_dis, input$poly_a_pileup)
   }
   selected_plot_points <- reactive({
     input$plot_brush
