@@ -19,14 +19,20 @@ shinyUI(fluidPage(
                        choices= list("expression log2(RPM)"= "genewise_exp", "tail length"="genewise_tail_length"),selected="tail length"),
     
     radioButtons("isoforms", "Include isoforms in GO term search?", 
-                       choices= list("Yes"= T, "No"= F),selected="No")
+                       choices= list("Yes"= T, "No"= F),selected="No"),
+    radioButtons("pval", "Show p value on chart?", 
+                 choices= list("Yes"= T, "No"= F),selected="Yes")
+    #radioButtons("organism", "Select an organism?", 
+     #            choices= list("Worm"= "celegans_gene_ensembl", "Yeast"= "scereisiae_gene_ensembl"),selected="Worm")
+    
   ),
   
   
   mainPanel(
       plotOutput("distPlot"),
       submitButton(text = "Apply Changes", icon = NULL),
-      textInput("bygene", label="search by gene name", value = ""),
+      textInput("bygene", label="search by yeast gene name (or start of gene name)", value = ""),
+      textInput("bywormgene", label="search by WBID (seperate terms by single space)", value = ""),
       textInput("GOterm", label="search by GOterm", value = ""),
       textInput("productterm", label="search by product description key term", value = ""),
       downloadButton("downloadPlot", label = "Download Plot")
