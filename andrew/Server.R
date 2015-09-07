@@ -1,7 +1,6 @@
 # a change
 source("major_calculations.R")
 library("Rsamtools")
-library("extrafont")
 library("jsonlite")
 
 shinyServer(function(input, output, session) {
@@ -113,7 +112,7 @@ shinyServer(function(input, output, session) {
       paste(trim(input$select_genes), '.eps', sep='')
     },
     content = function(file){
-      setEPS(width = 10, family = "Liberation Sans")
+      setEPS(width = 10)
       postscript(file)
       plot_calcs2()     
       dev.off() 
