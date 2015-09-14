@@ -1,9 +1,22 @@
+library(shiny)
+library(ggplot2)
+source("helper.R")
+
+
 shinyUI(fluidPage(
-    titlePanel("title panel"),
+    titlePanel("My first app"),
     
     sidebarLayout(
-        sidebarPanel("sidebar panel"),
-        mainPanel("main panel")
+        sidebarPanel(
+
+            numericInput("num", label = h3("Numeric input"), value = 1)         
+            ),
+        
+        mainPanel(
+            plotOutput("example.plot", click = "plot_click", hover="plot_hover"),
+       
+            verbatimTextOutput("plot.info")
+            )
         
         )
     
