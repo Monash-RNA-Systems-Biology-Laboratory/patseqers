@@ -10,8 +10,6 @@ shinyServer(function(input, output) {
         make_plot(input$num)
     })
     
-    output$plot.info <- renderText({
-        paste0("x=", input$plot_click$x, "y=", input$plot_click$y)
-    })
+   
     
 })

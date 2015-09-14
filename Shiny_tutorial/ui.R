@@ -13,9 +13,7 @@ shinyUI(fluidPage(
             ),
         
         mainPanel(
-            plotOutput("example.plot", click = "plot_click", hover="plot_hover"),
-       
-            verbatimTextOutput("plot.info")
+            plotOutput("example.plot")
             )
         
         )
