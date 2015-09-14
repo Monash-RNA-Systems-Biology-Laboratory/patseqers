@@ -9,7 +9,7 @@ shinyUI(fluidPage(
     sidebarLayout(
         sidebarPanel(
 
-            numericInput("num", label = h3("Numeric input"), value = 1)         
+            sliderInput("num", label = h3("Number of points"), value = 1, min = 0, max = 5000)     
             ),
         
         mainPanel(
