@@ -259,6 +259,7 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       }
       result[[1]][["seq"]] <- as.character(result[[1]][["seq"]])
       single_bam_frame <-  data.frame(result) 
+      print(head(single_bam_frame))
       colnames(single_bam_frame)<- c("qname", "strand", "pos", 
                                      "width", "sequence", "number_of_as", "number_of_ad_bases")
       #If the read is on the forward strand, add width to pos to obtain 3' end. 
