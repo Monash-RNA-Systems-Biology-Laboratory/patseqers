@@ -1,3 +1,3 @@
-shinyServeR(function(input, ouutput) {
+shinyServer(function(input, output) {
     
 })
