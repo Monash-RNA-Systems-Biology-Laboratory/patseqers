@@ -1,3 +1,0 @@
-shinyServeR(function(input, ouutput) {
-    
-})
