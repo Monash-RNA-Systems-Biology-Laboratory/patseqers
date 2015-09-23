@@ -199,9 +199,8 @@ get_sample_names <- function(df){
 
 
 process_pp_t_frame <- function (cols_i_want, samples, 
-                                title, group_list, combine){
-  
-  for sample in samples{
+                                title, group_list, combine){  
+  for (sample in samples){
     peak_1 <- cols_i_want[grep(paste0("*", sample, "*peak1*"), colnames(cols_i_want))] 
     peak_2 <-cols_i_want[,grep(paste0("*", sample, "*peak2*"), colnames(cols_i_want))] 
   }
