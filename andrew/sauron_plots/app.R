@@ -27,15 +27,9 @@ ui <- fluidPage (
     
     checkboxInput("combine", label = "Combine by Replicates", value = F),
     
-    uiOutput("choose_samples"),
-    
     uiOutput("select_group"),
     
-    numericInput("filter", "", 10),
-    
-    checkboxInput("varis", label = "Varistran Tansform Counts", value = T),
-    
-    checkboxInput("combine", label = "Combine by Replicates", value = F),
+    numericInput("filter", "Number of reads required per sample", 10),
     
     textInput("file_name", label =  "Name of file to download", "file"),    
     
@@ -227,9 +221,6 @@ get_sample_names <- function(df){
   return(refined_names)
 }
 
-
-
-
 process_pp_t_frame <- function (cols_i_want, samples, 
                                 title, group_list, combine){
   
@@ -293,10 +284,7 @@ make_plot_c_v_t <- function (df, samples, name, title, group_list, combine){
     count_frame <- rbind(count_frame,to_bind)
     count <- count+1
     
-  }
-  
-  
-  
+  }  
   
   if (combine == T){
     count_frame <- combine_by_reps(count_frame)   
