@@ -3,10 +3,7 @@ library("nesoni")
 library("ggplot2")
 library("reshape2")
 library("varistran")
-
-
 require(plyr)
-
 ui <- fluidPage (
   titlePanel("Sauron Plotter"),
   
@@ -23,21 +20,19 @@ ui <- fluidPage (
                 choices = list("Counts vs Tail Length" = 1, "Counts vs Peak Shift" = 2, 
                                "Peak Shift vs Tail Length" = 3), selected = 1),
     
+    numericInput("filter", "", 10,),
+    
     checkboxInput("varis", label = "Varistran Tansform Counts", value = T),
     
     checkboxInput("combine", label = "Combine by Replicates", value = F),
     
-    uiOutput("select_group"),
-    
-    numericInput("filter", "Number of reads required per sample", 10),
-    
     textInput("file_name", label =  "Name of file to download", "file"),    
     
     uiOutput("choose_samples"),
-    
     uiOutput("select_group"),
+    downloadButton("downloadPlot", label = "Download Plot")
     
-    downloadButton("downloadPlot", label = "Download Plot")    
+    
   ),
   
   mainPanel(
@@ -76,24 +71,19 @@ server <- function (input, output){
   })
   
   c_v_t_info_table<- reactive({
-    
-    get_plot_cols_c_v_t (count_info_table(), input$varis, input$combine)
-    
+    get_plot_cols_c_v_t (count_info_table(), input$varis)
   })
   
   samples_from_counts<- reactive({
     get_sample_names (count_info_table())
   })
-  
   select_group_fun <- reactive({
     count <- 1
     lapply(input$select_samples, 
            function(i) {          
              selectInput(paste0('snumber', i),              
-                         h5(paste0('Select a group for ', i)),             
+                         h5(paste0('Select a group for ', i)),
                          choices = 1:length(input$select_samples))
-             
-             
            }
     )
   })  
@@ -104,9 +94,6 @@ server <- function (input, output){
                   })
   })
   output$select_group <- renderUI({
-    
-    select_group_fun()
-    
     if (input$combine == T){
       select_group_fun()      
     }
@@ -141,10 +128,9 @@ server <- function (input, output){
   
   plot_calcs <- reactive({
     if (input$select_plot_meth == 1){
-      plot <- make_plot_c_v_t(    
-        input$select_plot_meth, input$file_path, 
-        group_list(), input$combine)
-      
+      plot <- make_plot_c_v_t(c_v_t_info_table(),input$select_samples, 
+                              input$select_plot_meth, input$file_path, 
+                              group_list(), input$combine)
       return(plot)    
     }
     else if (input$select_plot_meth == 2){
@@ -160,7 +146,6 @@ server <- function (input, output){
   output$plot <- renderPlot({  
     plot_calcs()
   })
-  
   output$downloadPlot <- downloadHandler(
     filename = function(){
       paste0(input$file_name, '.eps')
@@ -179,7 +164,6 @@ make_info_frame <- function (tt_location){
   return (data.frame(counts_csv))
 }
 
-
 get_plot_cols_c_v_t <- function (count_table, varis){
   
   counts <- count_table [,grep("Count.*",colnames(count_table))]
@@ -189,12 +173,7 @@ get_plot_cols_c_v_t <- function (count_table, varis){
   }
   else{
     counts <- log2(counts)
-    
   }
-
-  mean_tails <- count_table [,grep("Tail.*",colnames(count_table))]
-  final <- data.frame(count_table$Annotation.gene, counts, mean_tails)
-  return(final)
   
   mean_tails <- count_table [,grep("Tail.*",colnames(count_table))]
   final <- data.frame(count_table$Annotation.gene, counts, mean_tails)
@@ -218,9 +197,9 @@ get_sample_names <- function(df){
   return(refined_names)
 }
 
+
 process_pp_t_frame <- function (cols_i_want, samples, 
-                                title, group_list, combine){
-  
+                                title, group_list, combine){  
   for (sample in samples){
     peak_1 <- cols_i_want[grep(paste0("*", sample, "*peak1*"), colnames(cols_i_want))] 
     peak_2 <-cols_i_want[,grep(paste0("*", sample, "*peak2*"), colnames(cols_i_want))] 
@@ -233,39 +212,31 @@ process_pp_t_frame <- function (cols_i_want, samples,
 
 make_plot_c_v_t <- function (df, samples, name, title, group_list, combine){
   first <<- df
-  
   if (name ==1){
     t <- paste ("Counts vs Tail Length",title)
     x <- "Count"
     y <- "Tail Length"
     multi <- ""
     names_col <- "count_table.Annotation.gene"
-    
   }
   else if (name ==2){
     t <- paste ("Counts vs Peak Shift",title)
     x <- "Count"
     y <- "Peak Shift"
     multi <- ""
-    
   }
   else{
     t <- paste ("Peak Shift vs Tail Length",title)
-    x <- "Peak Shift"    
+    x <- "Peak Shift"
     y <- "Tail Length Change"
     multi <- "*"
-    names_col <- "Annotation.gene" 
-  } 
-  
+    names_col <- "Annotation.gene"
+    
+  }
   
   count_frame <- data.frame()
   count <- 1
   for (sample in samples){
-    
-    sample_col_count <- df[,grep(paste0("Count.", sample), colnames(df))] 
-    sample_col_tail <- df[,grep(paste0("Tail.", sample), colnames(df))] 
-    to_bind <- data.frame(sample_col_count ,sample_col_tail, sample)
-    
     sample_col_count <- df[,grep(paste0("Count.", sample,multi), colnames(df))] 
     sample_col_tail <- df[,grep(paste0("Tail.", sample, multi), colnames(df))] 
     
@@ -277,19 +248,23 @@ make_plot_c_v_t <- function (df, samples, name, title, group_list, combine){
       to_bind <- data.frame(df[,names_col], sample_col_count ,sample_col_tail, 
                             sample)
     }
-    
     count_frame <- rbind(count_frame,to_bind)
     count <- count+1
     
-  }  
+  }
   
+  
+  
+  processed_frame_pp_v_t <- process_pp_t_frame (
+    count_frame, samples,
+    t, group_list, combine
+  ) 
   if (combine == T){
     count_frame <- combine_by_reps(count_frame)   
     return(
       ggplot(data=count_frame, aes (x=mean_c, y=mean_t))+
         geom_point(aes(colour= group, group= group))+
         labs(title = t, x = x, y = y)
-      
     )
   }
   else{    
