@@ -22,7 +22,7 @@ shinyUI(fluidPage(
     checkboxInput("alt_plot", label = "Poly (A) Pileup", value = F),
     conditionalPanel(
       condition = "input.alt_plot == true",
-      checkboxInput("poly_a_pileup", label = "Pile up Reads", value = T),
+      checkboxInput("poly_a_pileup", label = "Pile up Reads", value = F),
       checkboxInput("order_alt", label = "Order Reads By Width and then Poly (A) Tail Length", value = T)       
     ),
       conditionalPanel(
