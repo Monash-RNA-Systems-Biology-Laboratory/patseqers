@@ -252,6 +252,9 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       # A check to make sure the adapter bases column is present. 
       #If not, I make a fake one of NAs.
       
+      if (length(result [[1]][[6]][[1]])!= length(result [[1]][[5]])){
+        result [[1]][[6]][[1]] <- rep(0, length(result [[1]][[5]]))    
+      }
       if (length(result [[1]][[6]][[2]])!= length(result [[1]][[6]][[1]])){
         result [[1]][[6]][[2]] <- rep(0, length(result [[1]][[6]][[1]]))      
       }
@@ -278,7 +281,6 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       count <- count +1
       
     }  
-    bam_frame <<- bam_frame
     return(bam_frame)
   }
   
@@ -299,7 +301,6 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
         else{
           tail_reads <- " with a poly (A)-tail "
         }      
-        
         if (groups == T){
           str <- paste("The number of reads ",tail_reads,"for ", peak_frame$group[1]," ", 
                        peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")

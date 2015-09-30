@@ -86,11 +86,7 @@ shinyServer(function(input, output, session) {
   
   poly_a_counts<- reactive({
     if (class(found_bam_files())=='data.frame'){
-      print(found_bam_files()$name)
-      print(input$select_bam_files)
       bam_files <- found_bam_files()$bam [found_bam_files()$name %in% input$select_bam_files]
-      print(found_bam_files()$name ==input$select_bam_files)
-      print(bam_files)
     }
     else{
       bam_files <- input$select_bam_files
