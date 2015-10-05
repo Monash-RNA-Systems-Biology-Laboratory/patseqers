@@ -1,10 +1,10 @@
 
 shinyUI(fluidPage(  
   # Hide all error messages
-  tags$style(type="text/css",
-             ".shiny-output-error { visibility: hidden; }",
-             ".shiny-output-error:before { visibility: hidden; }"
-  ),
+#   tags$style(type="text/css",
+#              ".shiny-output-error { visibility: hidden; }",
+#              ".shiny-output-error:before { visibility: hidden; }"
+#   ),
   titlePanel("Poly(A) Plotter"),
   em(helpText("created by Andrew Pattison, Jack Xu and Paul Harrison for the Beilharz Lab", align = "right")),
   helpText("
@@ -19,7 +19,7 @@ shinyUI(fluidPage(
                                          Separated by a Space"),
               value = "Peak1873"),
     uiOutput("gff_files"),
-    checkboxInput("alt_plot", label = "Poly (A) Pileup", value = F),
+    checkboxInput("alt_plot", label = "Plot Genomic Alignments", value = F),
     conditionalPanel(
       condition = "input.alt_plot == true",
       checkboxInput("poly_a_pileup", label = "Pile up Reads", value = F),
