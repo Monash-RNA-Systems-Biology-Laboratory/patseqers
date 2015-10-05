@@ -1,17 +1,21 @@
+# This code shows how the UI will be laid out
 shinyUI(fluidPage(
-    titlePanel("My first app"),
-    
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("slider1", label = h3("Number of points"), min = 0, 
-                        max = 500, value = 1),
-            numericInput("table.num", label = h3("How many rows to view for the table"), value = 1, max = 500)
-        ),
-        
-        mainPanel(
-            plotOutput("plot1"),
-            tableOutput("table1")
-        )
+  titlePanel("Making some points"),
+  # Inputs
+  sidebarLayout(
+    sidebarPanel(
+      
+      sliderInput("slider1", label = h3("Show N points"), 
+                  min = 0, max = 500, value = 1),
+      
+      numericInput("num", label = h3("Show N rows"),
+                   value = 1, max = 500)
+    ),
+    # Outputs
+    mainPanel(
+      plotOutput("plot1"),
+      tableOutput("table1")
     )
-    
+  )
+  
 ))
