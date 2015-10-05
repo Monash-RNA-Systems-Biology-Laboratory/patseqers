@@ -24,7 +24,9 @@ find_gff_files <- function(file_path) {
 }
 
 make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_alt, alt_cumu_dis, poly_a_pileup,show_poly_a =F){
-  
+  if (nrow(processed_frame) == 0){
+    return("Error, no reads for this gene or eak in this sample")
+  }
   if(order_alt==T){
     new_frame <- processed_frame[
       with(processed_frame,order(
@@ -193,6 +195,7 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
   }
   # Outpus the rows matching the input gene or peak name   
   filter_gff_for_rows<- function (gff,names){
+
     split_names <- strsplit(names, split = " ")
     empty <- data.frame()
     
@@ -250,15 +253,17 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       #Grabs reads overlapping the range specified by the gff row
       result <- scanBam (full_file_path , param = param, isMinusStrand = ori)
       # A check to make sure the adapter bases column is present. 
-      #If not, I make a fake one of NAs.
-      
+      #If not, I make a fake one of 0s.
       if (length(result [[1]][[6]][[1]])!= length(result [[1]][[5]])){
         result [[1]][[6]][[1]] <- rep(0, length(result [[1]][[5]]))    
       }
-      if (length(result [[1]][[6]][[2]])!= length(result [[1]][[6]][[1]])){
-        result [[1]][[6]][[2]] <- rep(0, length(result [[1]][[6]][[1]]))      
+      if (length(result [[1]][[6]][[2]])!= length(result [[1]][[5]])){
+        result [[1]][[6]][[2]] <- rep(0, length(result [[1]][[5]]))      
       }
       result[[1]][["seq"]] <- as.character(result[[1]][["seq"]])
+      if (length(result [[1]][[5]]) == 0){
+        stop('There are no reads for this sample')
+      }
       single_bam_frame <-  data.frame(result) 
       
       colnames(single_bam_frame)<- c("qname", "strand", "pos", 
