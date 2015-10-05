@@ -201,7 +201,7 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
     
     for (name in split_names[[1]]){
       index1 <- with(gff, grepl 
-                     (ignore.case = T,paste('[=/]{1}',name,'[;/]',sep=""), gff[,'Information']))
+                     (ignore.case = T,paste('[=/]{1}',name,'[;/,]',sep=""), gff[,'Information']))
       # Would be nice to find some better regex to get rid of this if statement. 
       # Maybe do this with a GFF parser
       
@@ -262,7 +262,7 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       }
       result[[1]][["seq"]] <- as.character(result[[1]][["seq"]])
       if (length(result [[1]][[5]]) == 0){
-        stop('There are no reads for this sample')
+        stop(paste('There are no reads for at least one peak in ', bam_file))
       }
       single_bam_frame <-  data.frame(result) 
       

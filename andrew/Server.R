@@ -4,6 +4,7 @@ library("Rsamtools")
 library("jsonlite")
 
 shinyServer(function(input, output, session) {
+
   output$select_file_path <- renderUI({
     selectInput("file_path", label = h4("Select a dataset"), 
                 choices = list.dirs(full.names=F, recursive =F), 
@@ -12,9 +13,11 @@ shinyServer(function(input, output, session) {
   
   found_gff_files <- reactive({
     find_gff_files(paste0(input$file_path))
+    
   })
+
   output$gff_files <- renderUI({
-    selectInput("gff_select", label = h4("GFF File Selection"), 
+    selectInput("gff_select", label = h4("GFF File Selection"),     
                 choices = found_gff_files(), 
                 selected =  found_gff_files()[1])   
   })
@@ -40,6 +43,8 @@ shinyServer(function(input, output, session) {
     
   })
   processed_gff <- reactive({
+    if(is.null(input$gff_select))
+      return()
     withProgress(message = 'Processing the gff file, this may take a few seconds.',
                  detail = 'This only happens once.', value = 0,{   
                    if (substring(input$gff_select,1,1)=="/"){
@@ -85,6 +90,7 @@ shinyServer(function(input, output, session) {
   
   
   poly_a_counts<- reactive({
+
     if (class(found_bam_files())=='data.frame'){
       bam_files <- found_bam_files()$bam [found_bam_files()$name %in% input$select_bam_files]
     }
