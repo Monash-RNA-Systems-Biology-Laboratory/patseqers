@@ -86,7 +86,7 @@ shinyServer(function(input, output, session) {
   
   poly_a_counts<- reactive({
     if (class(found_bam_files())=='data.frame'){
-      bam_files <- found_bam_files()$bam [found_bam_files()$name ==input$select_bam_files]
+      bam_files <- found_bam_files()$bam [found_bam_files()$name %in% input$select_bam_files]
     }
     else{
       bam_files <- input$select_bam_files
@@ -94,7 +94,6 @@ shinyServer(function(input, output, session) {
     withProgress(message = 'Processing the bam files.',
                  detail = 'This will take longer if there are a lot of reads.', 
                  value = 0,{  
-                   
                    initial_table <- get_a_counts (input$file_path, gffInput(),bam_files,
                                                   group_list(),found_bam_files())
                    initial_table[is.na(initial_table)]<-0
@@ -144,7 +143,6 @@ shinyServer(function(input, output, session) {
   output$seq_plot <- renderDataTable({
     min_points <-selected_plot_points()$xmin
     max_points <-selected_plot_points()$xmax
-    print(str(poly_a_counts()))
     if (input$alt_plot ==F){
       sequence <- poly_a_counts()$sequence[poly_a_counts()$number_of_as > min_points & poly_a_counts()$number_of_as < max_points]  
       name <- poly_a_counts()$gene_or_peak_name[poly_a_counts()$number_of_as > min_points & poly_a_counts()$number_of_as < max_points] 

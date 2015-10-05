@@ -1,10 +1,10 @@
 
 shinyUI(fluidPage(  
   # Hide all error messages
-  tags$style(type="text/css",
-             ".shiny-output-error { visibility: hidden; }",
-             ".shiny-output-error:before { visibility: hidden; }"
-  ),
+#   tags$style(type="text/css",
+#              ".shiny-output-error { visibility: hidden; }",
+#              ".shiny-output-error:before { visibility: hidden; }"
+#   ),
   titlePanel("Poly(A) Plotter"),
   em(helpText("created by Andrew Pattison, Jack Xu and Paul Harrison for the Beilharz Lab", align = "right")),
   helpText("
@@ -22,7 +22,7 @@ shinyUI(fluidPage(
     checkboxInput("alt_plot", label = "Poly (A) Pileup", value = F),
     conditionalPanel(
       condition = "input.alt_plot == true",
-      checkboxInput("poly_a_pileup", label = "Pile up Reads", value = T),
+      checkboxInput("poly_a_pileup", label = "Pile up Reads", value = F),
       checkboxInput("order_alt", label = "Order Reads By Width and then Poly (A) Tail Length", value = T)       
     ),
       conditionalPanel(

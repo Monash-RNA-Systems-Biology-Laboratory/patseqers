@@ -216,7 +216,6 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
   # This function gets the poly (A) counts for all given gff rows
   get_a_counts <- function(bam_file_path,gff_rows, bam_files, groups, names_from_json){
     reads_report <- data.frame() 
-    
     for (gff_row in 1:nrow(gff_rows)){
       counts_frame <- get_a_counts_gff_row(bam_file_path, gff_rows[gff_row,], 
                                            bam_files, groups, names_from_json)
@@ -250,16 +249,18 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
                               peak[,'Peak_Start'], peak[,'Peak_End'] )))
       #Grabs reads overlapping the range specified by the gff row
       result <- scanBam (full_file_path , param = param, isMinusStrand = ori)
-      print(str(result))
       # A check to make sure the adapter bases column is present. 
       #If not, I make a fake one of NAs.
       
+      if (length(result [[1]][[6]][[1]])!= length(result [[1]][[5]])){
+        result [[1]][[6]][[1]] <- rep(0, length(result [[1]][[5]]))    
+      }
       if (length(result [[1]][[6]][[2]])!= length(result [[1]][[6]][[1]])){
         result [[1]][[6]][[2]] <- rep(0, length(result [[1]][[6]][[1]]))      
       }
       result[[1]][["seq"]] <- as.character(result[[1]][["seq"]])
       single_bam_frame <-  data.frame(result) 
-      print(head(single_bam_frame))
+      
       colnames(single_bam_frame)<- c("qname", "strand", "pos", 
                                      "width", "sequence", "number_of_as", "number_of_ad_bases")
       #If the read is on the forward strand, add width to pos to obtain 3' end. 
@@ -300,7 +301,6 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
         else{
           tail_reads <- " with a poly (A)-tail "
         }      
-        
         if (groups == T){
           str <- paste("The number of reads ",tail_reads,"for ", peak_frame$group[1]," ", 
                        peak_frame$gene_or_peak_name[1], " is: ",nrow(peak_frame),".", "\n", sep ="")
