@@ -103,7 +103,7 @@ shinyServer(function(input, output, session) {
                    initial_table <- get_a_counts (input$file_path, gffInput(),bam_files,
                                                   group_list(),found_bam_files())
                    initial_table[is.na(initial_table)]<-0
-                   
+                  
                    if (input$all_reads ==F){  
                      initial_table <- initial_table[initial_table$number_of_as > 0,]
                    }
@@ -112,7 +112,7 @@ shinyServer(function(input, output, session) {
                                                            initial_table$width >=
                                                            input$al_length[1]&
                                                            initial_table$width <=
-                                                           input$al_length[2],]                        
+                                                           input$al_length[2],]  
                  })
   })
   output$means_frame <- renderDataTable({

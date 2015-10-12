@@ -55,8 +55,8 @@ shinyUI(fluidPage(
     sliderInput("ad_slider", label= 'number of adapter bases', min=0, max=23,
                 value =0, step = 1,ticks = TRUE, 
                 sep = ","),
-    sliderInput("al_length", label= 'alignment length range', min=0, max=300,
-                value =c(0,300))
+    sliderInput("al_length", label= 'alignment length range', min=0, max=400,
+                value =c(0,400))
     
   ),
   mainPanel(

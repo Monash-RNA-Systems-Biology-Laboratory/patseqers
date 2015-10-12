@@ -211,7 +211,6 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       output <-gff[index1 | index2, ] 
       output$input_gene_or_peak <- name
       empty <- rbind(empty, output)
-      print(empty)
     }
     return(empty)
   }
