@@ -1,10 +1,10 @@
 
 shinyUI(fluidPage(  
   # Hide all error messages
-#   tags$style(type="text/css",
-#              ".shiny-output-error { visibility: hidden; }",
-#              ".shiny-output-error:before { visibility: hidden; }"
-#   ),
+  tags$style(type="text/css",
+             ".shiny-output-error { visibility: hidden; }",
+             ".shiny-output-error:before { visibility: hidden; }"
+  ),
   titlePanel("Poly(A) Plotter"),
   em(helpText("created by Andrew Pattison, Jack Xu and Paul Harrison for the Beilharz Lab", align = "right")),
   helpText("

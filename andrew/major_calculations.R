@@ -205,13 +205,13 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       # Would be nice to find some better regex to get rid of this if statement. 
       # Maybe do this with a GFF parser
       
-      if (sum(index1)==0){
-        index1 <- with(gff, grepl 
-                       (ignore.case = T,paste('=',name,'$',sep=""), gff[,'Information']))
-      }
-      output <-gff[index1, ] 
+      index2 <- with(gff, grepl 
+                      (ignore.case = T,paste('=',name,'$',sep=""), gff[,'Information']))
+
+      output <-gff[index1 | index2, ] 
       output$input_gene_or_peak <- name
       empty <- rbind(empty, output)
+      print(empty)
     }
     return(empty)
   }
