@@ -12,10 +12,10 @@ def clip_bases (base_to_clip, fqfile, output_filename):
 		number_off_clipped_bases = 0
 		reads_clipped = 0
 		total_reads = 0
-		count = 0
 		total_reads = len (fqfile) /4 
+		count = 0
 		for line in range(0,len(fqfile)):
-			if line % 4 == 1 and fqfile[line][0] == "T":	
+			if line % 4 == 1 and fqfile[line][0] == base_to_clip:	
 				reads_clipped = reads_clipped +1
 				count = 0		
 				for base in fqfile[line]:
@@ -33,6 +33,7 @@ def clip_bases (base_to_clip, fqfile, output_filename):
 			elif line % 4 == 3 and count != 0:
 				new_qual_line = fqfile[line][count:]
 				f.write(new_qual_line)
+				count = 0
 			else:
 				f.write(fqfile[line])
 	print("total clipped bases =", number_off_clipped_bases)
