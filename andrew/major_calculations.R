@@ -49,6 +49,15 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
   if(alt_plot == T){
     
     if (poly_a_pileup == T ){
+            if (length(samples) == 1){
+              par(mfrow= c(1,1))
+            }
+            else if ((length(samples)/2)%%1 == 0){
+              par(mfrow= c(as.integer(length(samples)/2),2))
+            }
+            else{
+              par(mfrow= c(as.integer(length(samples)/2)+1,2))        
+            }
       for (sample in samples) {
         points <- data.frame(sample$width, sample$number_of_as)
         ymax <- nrow(points)  
