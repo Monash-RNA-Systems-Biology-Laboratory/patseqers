@@ -41,6 +41,6 @@ fetch_goterm <- function(attr, pick_mart, term) {
 # }
 
 find_peaks <- function(file_path) {    
-  peaks_df <- list.files(paste (file_path), pattern = 'individual-pairs.csv')
-  peaks_df <- read.grouped.table(paste0(file_path, "/", count_df))
+    peaks_df <- list.files(paste (file_path), pattern = 'individual-pairs.csv')
+    peaks_df <- read.grouped.table(paste0(file_path, "/", peaks_df))
 }
