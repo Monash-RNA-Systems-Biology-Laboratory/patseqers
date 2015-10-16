@@ -10,14 +10,20 @@ shinyUI(fluidPage(
         uiOutput("experi_sel"),  
         
         selectInput("org.type", label = "Type of organism", choices =
-                        list("Yeast" = "scerevisiae_gene_ensembl", "Ce.elegans" = "celegans_gene_ensembl"), 
-                    selected = "celegans_gene_ensembl"),
+                        list("Humans" = "hsapiens_gene_ensembl", "Yeast" = "scerevisiae_gene_ensembl", 
+                             "Ce.elegans" = "celegans_gene_ensembl"), 
+                    selected = "hsapiens_gene_ensembl"),
+        helpText("This is required to ")
+        checkboxInput("x.rep", label = "Plot means of selected replicates on the x-axis", 
+                      value = TRUE),
         uiOutput("x.sel.ui"),
         selectInput("datatypex", label = "Type of data to be plotted on x-axis", choices =
-                        list("Gene expression" = 1, "Tail length" = 2, "Peak pair shift" = 3), selected = 1),
+                        list("Gene expression (RPM)" = 1, "Tail length" = 2, "Peak pair shift" = 3), selected = 1),
+        checkboxInput("y.rep", label = "Plot means of selected replicates on the y-axis", 
+                      value = TRUE),
         uiOutput("y.sel.ui"),
         selectInput("datatypey", label = "Type of data to be plotted on y-axis", choices =
-                        list("Gene expression" = 1, "Tail length" = 2,  "Peak pair shift" = 3), selected = 1),
+                        list("Gene expression (RPM)" = 1, "Tail length" = 2,  "Peak pair shift" = 3), selected = 1),
         numericInput("numfilter", label = "Minimum count filter", value = 25, min = 0),
         textInput("file_name", label = "Name of file to download", "file"),
         downloadButton("deps", label = "Download eps file"),

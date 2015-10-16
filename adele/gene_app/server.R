@@ -3,6 +3,7 @@ library(biomaRt)
 library(shiny)
 library(ggplot2)
 library(nesoni)
+library(reshape2)
 source("helper.R")
 
 shinyServer(function(input, output) {
@@ -27,10 +28,12 @@ shinyServer(function(input, output) {
     
     go.attribute <- reactive({
         org <- input$org.type
-        if(input$org.type == "celegans_gene_ensembl"){
-            attr <- "refseq_mrna"
+        if(input$org.type == "hsapiens_gene_ensembl"){
+            attr <- "ucsc"
         } else if(input$org.type == "scerevisiae_gene_ensembl"){
             attr <- "ensembl_gene_id"
+        } else if(input$org.type == "celegans_gene_ensembl") {
+            attr <- "refseq_mrna"
         }
         return(attr)
     })
@@ -160,16 +163,20 @@ shinyServer(function(input, output) {
     #Find the means for the selected replicates on the xaxis and yaxis
     xaxis.mean <- reactive({
         df <- select.xaxis.rep()
-        x.mean <- rowMeans(df)
-        x.mean <- as.data.frame(x.mean)
-        return(x.mean)
+        if(input$x.rep == TRUE){
+            x.mean <- rowMeans(df)
+            df <- as.data.frame(x.mean)
+        }
+        return(df)
     })
     
     yaxis.mean <- reactive({
         df <- select.yaxis.rep()
-        y.mean <- rowMeans(df)
-        y.mean <- as.data.frame(y.mean)
-        return(y.mean)
+        if(input$y.rep == TRUE){
+            y.mean <- rowMeans(df)
+            df <- as.data.frame(y.mean)
+        }
+        return(df)
     })
     
     #Generate a dataframe holding the means of the samples selected on the x and y axis
@@ -190,9 +197,21 @@ shinyServer(function(input, output) {
         yaxis <- subset(yaxis, significant)
         yaxis$significant <- NULL
         
+        xaxis$xaxis <- rep("xaxis", nrow(xaxis))
+        yaxis$yaxis <- rep("yaxis", nrow(yaxis))
+#         if(input$x.rep == FALSE) {
+#             xaxis <- melt(xaxis)
+#         }
+#         
+#         if(input$y.rep == FALSE) {
+#             yaxis <- melt(yaxis)
+#         }
+        xaxis <- melt(xaxis)
+        yaxis <- melt(yaxis)
+
         df <- data.frame(xaxis, yaxis)
-        df <- df[!(is.na(df$x.mean) | is.na(df$y.mean)), ]
-        
+#         df <- df[!(is.na(df$x.mean) | is.na(df$y.mean)), ]
+#         df <- melt(df)
         return(df)
     })
     
@@ -222,8 +241,8 @@ shinyServer(function(input, output) {
         info.df <- info.df()
         rname <- row.names(info.df)
         gname <- as.character(info.df[,2])
-        
-        names <- c(gname, rname)
+        #         names <- c(gname, rname)
+        names <- c(gname)
         names <- as.list(names)
         
         return(names)
@@ -232,7 +251,7 @@ shinyServer(function(input, output) {
     #Create a ui element for the list of genes currently present in the plot
     output$gene.search.ui <- renderUI({
         selectizeInput("gene.search.sel", label = "Input genes to highlight", choices = gene.names(), 
-                       selected = NULL, multiple = TRUE)
+                       selected = NULL, multiple = TRUE, options = list(maxOptions = 5))
     })
     
     #Create a dataframe filtered by the selected genes. This will take input from both the text input
@@ -303,15 +322,16 @@ shinyServer(function(input, output) {
         return(paste(total.genes, "total genes in the graph after filtering."))
     })
     
-    #Renders the plot
+    #Builds the plot
     main_plot <- reactive({
         df <- base.df()
         sel.genes.df <- selected.genes()
         goterm.df <- goterm.genes()
         key.genes.df <- key.genes()
         
-        geneplot <- ggplot(df, aes(x= x.mean, y = y.mean)) + geom_point() + theme(aspect.ratio =1) +
-            theme_bw()
+        geneplot <- ggplot(df, aes(x= xaxis, y = yaxis)) + geom_point() + theme_bw() + 
+            theme(aspect.ratio =1) 
+        
         geneplot
         
         
@@ -342,8 +362,8 @@ shinyServer(function(input, output) {
         
         geneplot
     })
-        output$gplot <- renderPlot({
-            main_plot()
+    output$gplot <- renderPlot({
+        main_plot()
     })
     
     #Reports on the number of genes highlighted by the gene search widgets
@@ -382,7 +402,6 @@ shinyServer(function(input, output) {
             paste0(input$file_name, ".eps")
         },
         content = function(file) {
-#             ggsave(file)
             setEPS(width = 10)
             postscript(file)
             print(main_plot())
@@ -391,23 +410,16 @@ shinyServer(function(input, output) {
     
     output$dpdf <- downloadHandler(
         filename = function(){
-            "file.pdf"
+            paste0(input$file_name, ".pdf")
         },
         content = function(file) {
             ggsave(file)
         })
-        
-#         output$downloadPlot<-downloadHandler(
-#             filename = function(){
-#                 "file.pdf"
-#             },
-#             
-#             content = function(file){
-#                 ggsave(file)
-#             }
-#         )
     
-    
+    output$gene.table <- renderTable({
+        df <- base.df()
+        head(df)
+    })
     
 })
 
