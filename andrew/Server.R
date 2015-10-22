@@ -6,7 +6,7 @@ library("jsonlite")
 shinyServer(function(input, output, session) {
   
   output$select_file_path <- renderUI({
-    selectInput("file_path", label = h4("Select a dataset"), 
+    selectInput("file_path", label = h4("Select which dataset you would like to use"), 
                 choices = list.dirs(full.names=F, recursive =F), 
                 selected =  list.dirs(full.names=F, recursive =F)[1])   
   })
@@ -17,7 +17,8 @@ shinyServer(function(input, output, session) {
   })
 
   output$gff_files <- renderUI({
-    selectInput("gff_select", label = h4("GFF File Selection"),     
+    selectInput("gff_select", label = h4("The genomic features to be used
+                                         to group reads"),     
                 choices = found_gff_files(), 
                 selected =  found_gff_files()[1])   
   })
@@ -27,8 +28,8 @@ shinyServer(function(input, output, session) {
   output$bam_files <- renderUI({
     
     if (class(found_bam_files())=='data.frame'){
-      checkboxGroupInput("select_bam_files", label = h4("Select the Relevant 
-                                                        Bam FIles"),
+      checkboxGroupInput("select_bam_files", label = h4("Select the 
+                                                        bam files you would like to plot"),
                          choices = found_bam_files()[[1]], 
                          selected = found_bam_files()[[1]][1]) 
       #Goes into the data frame and gets the file paths corresponding 
