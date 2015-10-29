@@ -25,10 +25,12 @@ find_gff_files <- function(file_path) {
 # So this function got out of hand... but I basically makes whatever plot
 # is specified by the user. 
 make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_alt, alt_cumu_dis, poly_a_pileup,show_poly_a =F){
-  if (nrow(processed_frame) == 0){
+  if (length(processed_frame) == 0){
     return("Error, no reads for this gene or eak in this sample")
   }
+  
   if(order_alt==T){
+
     new_frame <- processed_frame[
       with(processed_frame,order(
         -width, -number_of_as)
@@ -46,6 +48,7 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
   else {
     samples <- split(new_frame, new_frame$sample, drop =T)    
   }  
+ 
   par(bty="l", ps = 10, mar=c(5.1,4.1,4.1,8.1), xpd =T)
   if(alt_plot == T){
     
@@ -219,9 +222,13 @@ filter_gff_for_rows<- function (gff,names){
                    (ignore.case = T,paste('=',name,'$',sep=""), gff[,'Information']))
     
     output <-gff[index1 | index2, ] 
+    if (nrow (output) == 0){
+      stop('There are no reads this gene/peak in your selected samples')
+    }
     output$input_gene_or_peak <- name
     empty <- rbind(empty, output)
   }
+
   return(empty)
 }
 
@@ -229,11 +236,19 @@ filter_gff_for_rows<- function (gff,names){
 get_a_counts <- function(bam_file_path,gff_rows, bam_files, groups, names_from_json){
   reads_report <- data.frame() 
   for (gff_row in 1:nrow(gff_rows)){
+    print("here?")
     counts_frame <- get_a_counts_gff_row(bam_file_path, gff_rows[gff_row,], 
                                          bam_files, groups, names_from_json)
+    print("shouldn't get here")
+    if (nrow(counts_frame) == 0){
+      next
+    }
     counts_frame$gene_or_peak_name <- gff_rows[gff_row, 'input_gene_or_peak']
-    reads_report <-rbind(reads_report,counts_frame)      
+
+    reads_report <-rbind(reads_report,counts_frame)   
+
   }
+  
   return(reads_report)
 }
 
@@ -263,6 +278,7 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups,names_fro
     result <- scanBam (full_file_path , param = param, isMinusStrand = ori)
     # A check to make sure the adapter bases column is present. 
     #If not, I make a fake one of 0s.
+    
     if (length(result [[1]][[6]][[1]])!= length(result [[1]][[5]])){
       result [[1]][[6]][[1]] <- rep(0, length(result [[1]][[5]]))    
     }
@@ -273,6 +289,7 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups,names_fro
     if (length(result [[1]][[5]]) == 0){
       stop(paste('There are no reads for at least one peak in ', bam_file))
     }
+    
     single_bam_frame <-  data.frame(result) 
     
     colnames(single_bam_frame)<- c("qname", "strand", "pos", 
@@ -281,16 +298,24 @@ get_a_counts_gff_row <- function(bam_file_path,peak, bam_files, groups,names_fro
     if (ori == FALSE ){
       single_bam_frame$pos <- single_bam_frame$pos+ single_bam_frame$width
     }
+    
     single_bam_frame <- single_bam_frame[single_bam_frame$pos >= 
                                            peak[,'Peak_Start']& 
                                            single_bam_frame$pos <= peak[,'Peak_End'] ,]
+    print(str(single_bam_frame))
+    if (nrow(single_bam_frame) == 0){
+      next
+    #  single_bam_frame <- data.frame(0,0,0,0,0,0,0,0,0,0)
+    }
     if (substring(bam_file,1,1)=="/"){
       single_bam_frame$sample <-  names_from_json$name [names_from_json$bam ==paste(bam_file)]
     }
     else{
       single_bam_frame$sample <- paste(bam_file)
     }
+    print("do we get to here?")
     single_bam_frame$group<- paste("group", groups[count])
+ 
     bam_frame <- rbind(bam_frame,single_bam_frame)
     count <- count +1
     
