@@ -79,7 +79,6 @@ make_plot <- function(processed_frame, ranges,names, leg,group, alt_plot, order_
       }
       return()
     }
-    seq_to_plot <- get_plot_sequence(new_frame)
     ymax <- 0
     for (sample in samples){
       title <- sample[1, 'gene_or_peak_name']
