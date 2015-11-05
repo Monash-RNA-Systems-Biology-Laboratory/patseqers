@@ -34,6 +34,11 @@ fetch_goterm <- function(attr, pick_mart, term) {
     return(get.GO)
 }
 
+# fetch_names <- function(pick_mart, term) {
+#     get.names <- getBM(attributes=c("refseq_mrna"), filters = "go_id",
+#                     values = term, mart= pick_mart)
+#     return(get.GO)
+# }
 
 find_peaks <- function(file_path) {
     
