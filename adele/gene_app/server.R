@@ -1,9 +1,8 @@
 library(edgeR)
 library(biomaRt)
-library(shiny)
+library(shinyBS)
 library(ggplot2)
 library(nesoni)
-library(reshape2)
 source("helper.R")
 
 shinyServer(function(input, output) {
@@ -83,15 +82,19 @@ shinyServer(function(input, output) {
     
     #Use the axis.names list to render selectInput in UI for x and y axis
     output$x.sel.ui <- renderUI({
+        
         selectInput("x.selection", label = h4("Select X-axis"),
                     choices = axis.names(),
-                    selected =  axis.names()[1], multiple = TRUE)   
+                    selected =  axis.names()[1], multiple = TRUE)  
+        
     })
     
     output$y.sel.ui <- renderUI({
+        
         selectInput("y.selection", label = h4("Select Y-axis"),
                     choices = axis.names(),
-                    selected =  axis.names()[2], multiple = TRUE)   
+                    selected =  axis.names()[2], multiple = TRUE)  
+        
     })
     
     peak.df <- reactive({
@@ -130,10 +133,10 @@ shinyServer(function(input, output) {
         peak.df <- peak.df()
         xsel <- input$x.selection
         #         xsel <- xselect()
-        if(input$datatypex == 1) {
+        if(input$datatypex == "gene expression") {
             x.df <- count.df[, xsel, drop = FALSE]
             x.df <- tmmnorm(x.df)
-        } else if(input$datatypex == 2) {
+        } else if(input$datatypex == "tail length") {
             x.df <- tail.df[, xsel, drop = FALSE]
         } else {
             x.df <- peak.df[, xsel, drop = FALSE]
@@ -149,10 +152,10 @@ shinyServer(function(input, output) {
         ysel <- input$y.selection
         #         ysel <- yselect()
         
-        if(input$datatypey == 1) {
+        if(input$datatypey == "gene expression") {
             y.df <- count.df[, ysel, drop = FALSE]
             y.df <- tmmnorm(y.df)
-        } else if(input$datatypey == 2){
+        } else if(input$datatypey == "tail length"){
             y.df <- tail.df[, ysel, drop = FALSE]
         } else {
             y.df <- peak.df[, ysel, drop = FALSE]
@@ -163,20 +166,16 @@ shinyServer(function(input, output) {
     #Find the means for the selected replicates on the xaxis and yaxis
     xaxis.mean <- reactive({
         df <- select.xaxis.rep()
-        if(input$x.rep == TRUE){
-            x.mean <- rowMeans(df)
-            df <- as.data.frame(x.mean)
-        }
-        return(df)
+        x.mean <- rowMeans(df)
+        x.mean <- as.data.frame(x.mean)
+        return(x.mean)
     })
     
     yaxis.mean <- reactive({
         df <- select.yaxis.rep()
-        if(input$y.rep == TRUE){
-            y.mean <- rowMeans(df)
-            df <- as.data.frame(y.mean)
-        }
-        return(df)
+        y.mean <- rowMeans(df)
+        y.mean <- as.data.frame(y.mean)
+        return(y.mean)
     })
     
     #Generate a dataframe holding the means of the samples selected on the x and y axis
@@ -197,21 +196,9 @@ shinyServer(function(input, output) {
         yaxis <- subset(yaxis, significant)
         yaxis$significant <- NULL
         
-        xaxis$xaxis <- rep("xaxis", nrow(xaxis))
-        yaxis$yaxis <- rep("yaxis", nrow(yaxis))
-#         if(input$x.rep == FALSE) {
-#             xaxis <- melt(xaxis)
-#         }
-#         
-#         if(input$y.rep == FALSE) {
-#             yaxis <- melt(yaxis)
-#         }
-        xaxis <- melt(xaxis)
-        yaxis <- melt(yaxis)
-
         df <- data.frame(xaxis, yaxis)
-#         df <- df[!(is.na(df$x.mean) | is.na(df$y.mean)), ]
-#         df <- melt(df)
+        df <- df[!(is.na(df$x.mean) | is.na(df$y.mean)), ]
+        
         return(df)
     })
     
@@ -239,7 +226,7 @@ shinyServer(function(input, output) {
     gene.names <- reactive({
         
         info.df <- info.df()
-        rname <- row.names(info.df)
+        #         rname <- row.names(info.df)
         gname <- as.character(info.df[,2])
         #         names <- c(gname, rname)
         names <- c(gname)
@@ -258,13 +245,13 @@ shinyServer(function(input, output) {
     #and the selectiveInput widget
     selected.genes <- reactive({
         
-        
         if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
             base.df <- base.df()
-            sel.genes <- input$gene.search.sel
-            pas.genes <- input$gene.paste.sel
+            rownames(base.df) <- tolower(rownames(base.df))
+            sel.genes <- tolower(input$gene.search.sel)
+            pas.genes <- tolower(input$gene.paste.sel)
             info.df <- info.df()
-            base.df$genes <- info.df$gene
+            base.df$genes <- tolower(info.df$gene)
             
             sgenes <- as.data.frame(sel.genes)
             
@@ -274,17 +261,17 @@ shinyServer(function(input, output) {
             base.df$selected <- rownames(base.df) %in% sgenes$sel.genes | base.df$genes %in% sgenes$sel.genes |
                 rownames(base.df) %in% pgenes$pgenes | base.df$genes %in% pgenes$pgenes
             base.df <- subset(base.df, selected)
-            
+            return(base.df)
         }
-        return(base.df)
+        
     })
     
     #Generate a dataframe containing genes matching a key word in the product description. The product 
     #description is found in info.df 
     key.genes <- reactive({
-        
+        base.df <- base.df()
         if(!input$key.select == ""){
-            base.df <- base.df()
+            
             key.word <- input$key.select
             info.df <- info.df()
             base.df$key_search <- info.df$product
@@ -306,31 +293,57 @@ shinyServer(function(input, output) {
         if(!goterm.word == ""){
             query <- fetch_goterm(attr, org, goterm.word)
             colnames(query) <- "genes"
-            base.df$goterm <- rownames(base.df) %in% query$genes
-            base.df <- subset(base.df, goterm)
-            base.df$goterm <- NULL
+            base.df <- base.df[unique(grep(paste(query$genes, collapse = "|"), rownames(base.df),
+                                           value = TRUE, ignore.case = TRUE)), ]
+            #             base.df$goterm <- rownames(base.df) %in% query$genes
+            #             base.df <- subset(base.df, goterm)
+            #             base.df$goterm <- NULL
         }
         return(base.df)
     })
     
     ####Below here are outputs#########################
     
-    #Reports on the number of genes in total being plotted
-    output$total.txt <- renderText({
-        total.genes <- nrow(base.df())
-        
-        return(paste(total.genes, "total genes in the graph after filtering."))
-    })
+   
     
-    #Builds the plot
+    #     m.df <- reactive({
+    #         df <- base.df()
+    #         x <- input$plot_hover$x
+    #         y <- input$plot_hover$y
+    #         
+    #         
+    #         m.df <- df[df$x.mean >= (x - 0.5) & df$x.mean <= (x + 0.5) &
+    #                        df$y.mean >= (y - 0.5) & df$y.mean <= (y + 0.5), ]
+    #         print(paste(nrow(m.df), "X min =", x - 0.5, "X max =", x + 0.5,
+    #                     "Y min =", y - 0.5, "Y max =", y + 0.5), str(m.df))
+    #         return(m.df)
+    #     })
+    #     
+    #     output$hover.txt <- renderTable({
+    #         df <- m.df()
+    #         print(paste(nrow(m.df), "X min =", x - 0.5, "X max =", x + 0.5,
+    #                     "Y min =", y - 0.5, "Y max =", y + 0.5), str(m.df))
+    #         return(head(df))
+    #     })
+    
+    
+    
+    #Renders the plot
     main_plot <- reactive({
         df <- base.df()
         sel.genes.df <- selected.genes()
         goterm.df <- goterm.genes()
         key.genes.df <- key.genes()
+        xmean.max <- max(df$x.mean)
+        ymean.max <- max(df$y.mean)
+        xmean.min <- min(df$x.mean)
+        ymean.min <- min(df$y.mean)
+        vmax <- max(c(xmean.max, ymean.max))
+        vmin <- min(c(xmean.min, ymean.min))
         
-        geneplot <- ggplot(df, aes(x= xaxis, y = yaxis)) + geom_point() + theme_bw() + 
-            theme(aspect.ratio =1) 
+        geneplot <- ggplot(df, aes(x= x.mean, y = y.mean)) + geom_point() + theme_bw() + 
+            xlab(paste("x.mean", input$datatypex)) + #theme(aspect.ratio =1) +
+            ylab(paste("y.mean", input$datatypey)) + xlim(vmin, vmax) + ylim(vmin, vmax)
         
         geneplot
         
@@ -338,14 +351,14 @@ shinyServer(function(input, output) {
         if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
             
             geneplot <- geneplot + geom_point(data = sel.genes.df, aes(x = x.mean, y=y.mean), 
-                                              colour = "red")
+                                              colour = "#FF00FF")
         } else{
             geneplot
         }
         
         if(!input$key.select == "") {
             geneplot <- geneplot + geom_point(data = key.genes.df, aes(x = x.mean, y=y.mean), 
-                                              colour = "blue")
+                                              colour = "#FFF000")
         } else {
             geneplot
         }
@@ -354,7 +367,7 @@ shinyServer(function(input, output) {
         if(!input$goterm.select == ""){
             
             geneplot <- geneplot + geom_point(data = goterm.df, aes(x = x.mean, y = y.mean), 
-                                              colour = "green")
+                                              colour = "#0000FF")
         } else {
             geneplot
         }
@@ -362,8 +375,25 @@ shinyServer(function(input, output) {
         
         geneplot
     })
+    
     output$gplot <- renderPlot({
+        
         main_plot()
+    })
+    
+    #Reports on the number of genes in total being plotted
+    output$total.txt <- renderText({
+        total.genes <- nrow(base.df())
+        
+        return(paste(total.genes, "total genes in the graph after filtering. Below, the top 5 closest genes to
+the current mouse position, arranged in order of nearest distance to furthest."))
+    })
+    
+    #Returns the closest rows to the mouse hover
+    output$info_plot <- renderPrint({
+        
+        nearPoints(base.df(), input$plot_hover, xvar = "x.mean", yvar = "y.mean", threshold = 10, 
+                   maxpoints = 5)
     })
     
     #Reports on the number of genes highlighted by the gene search widgets
@@ -371,8 +401,8 @@ shinyServer(function(input, output) {
         sel.genes <- nrow(selected.genes())
         
         if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
-            
-            return(paste(sel.genes, "genes are found and highlighted in the current dataset."))
+        
+            return(paste(sel.genes, "genes have been selected and highlighted in the current dataset."))
         } 
         
     })
@@ -385,6 +415,7 @@ shinyServer(function(input, output) {
             return(paste(sel.key, "genes match the key word searched for in the current dataset."))
         }
     })
+    
     
     #Reports the number of genes matching the GO Term
     output$goterm.txt <- renderText({
@@ -416,10 +447,6 @@ shinyServer(function(input, output) {
             ggsave(file)
         })
     
-    output$gene.table <- renderTable({
-        df <- base.df()
-        head(df)
-    })
     
 })
 
