@@ -1,0 +1,12 @@
+Package: hmapextension
+Title: Produced an interactive heatmap resembling Tailtools output
+Version: 0.1
+Date: 2015-12-02
+Author: Michael See
+Maintainer: Michael See <mmsee2@student.monash.edu>
+Description: Takes a grouped table as input, and produces a heatmap with some
+    interactivity Interactivity is from the shiny library
+License: LGPL-2.1
+Depends:
+    varistran
+RoxygenNote: 5.0.1
