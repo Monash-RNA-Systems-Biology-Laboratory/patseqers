@@ -1,7 +1,7 @@
 \name{make_o}
 \alias{make_o}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{
+\title{make_o
 %%  ~~function to do ... ~~
 }
 \description{

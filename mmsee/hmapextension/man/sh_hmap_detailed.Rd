@@ -1,7 +1,7 @@
 \name{sh_hmap_detailed}
 \alias{sh_hmap_detailed}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{
+\title{pl_hmap_detailed
 %%  ~~function to do ... ~~
 }
 \description{
