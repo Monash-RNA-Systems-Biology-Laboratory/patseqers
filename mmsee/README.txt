@@ -16,3 +16,7 @@ https://github.com/Victorian-Bioinformatics-Consortium/nesoni
 
 Additional documentation can be found hosted on the lab server or in the apps directory. Documentation provided are html files 
 written using markdown.
+
+hmapextension can be installed using devtools:
+library(devtools)
+install_github("Monash-RNA-Systems-Biology-Laboratory/patseqers/mmsee/hmapextension")
