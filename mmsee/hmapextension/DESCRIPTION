@@ -1,4 +1,5 @@
 Package: hmapextension
+Type: Package
 Title: Produced an interactive heatmap resembling Tailtools output
 Version: 0.1
 Date: 2015-12-02
