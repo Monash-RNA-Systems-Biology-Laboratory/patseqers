@@ -116,7 +116,7 @@ sh_hmap_detailed <-
                 
                 if (sum(selection) < 1) stop("No features to show.")
                 
-                pl(
+                pl_hmap_detailed(
                     matf1=a1$Tail[selection,,drop=FALSE],
                     matf2=a1$Count[selection,,drop=FALSE],
                     gmatf=a1$annotate[selection,,drop=FALSE],
