@@ -77,7 +77,6 @@ sh_hmap_detailed <-
                 rw3$Tail <- rw3$Tail[cvec,]
                 rw3$Tail_count <- rw3$Tail_count[cvec,]
                 rw3$Count <- rw3$Count[cvec,]
-                View(rw3$Count)
                 rownames(rw3$Count) <- substr(rownames(rw3$Count), 1, 17)
                 rownames(rw3$Tail) <- substr(rownames(rw3$Tail), 1, 17)
                 rownames(rw3$Tail_count) <- substr(rownames(rw3$Tail_count), 1, 17)
