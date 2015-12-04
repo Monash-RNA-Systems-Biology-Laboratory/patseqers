@@ -7,9 +7,9 @@
 # Brushes (At least the way I have enabled them) for one reason or another does not have the resolution to 
 # select all the rows in the heatmap. 
 # To get around this, one may consider grabbing the index of the first and last rows the brush returns 
-# and match that to the dataframe and pull out all the rows in between to match and pull out the rows it needs.
-# Keeping in mind however, that the brush also fails to accurately select the last row brushed as well, so 
-# realistically, interactivity with the dendogram is might be more accurate if one worked out how to enable 
+# and match that to the DataFrame and pull out all the rows in between to match and pull out the rows it needs.
+# Keeping that in mind, the brush also fails to accurately select the last row brushed as well, so 
+# realistically, interactivity with the dendrogram is might be more accurate if one worked out how to enable 
 # interactivity in that region of the plot. This is all of course something to consider while keeping in mind the 
 # plot is not interactive on the right region, and only allows brushes to be drawon over the rowmeans column.
 
