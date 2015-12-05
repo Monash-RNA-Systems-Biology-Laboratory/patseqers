@@ -92,13 +92,13 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
         any(row >= env$input[[p("expmin")]])
       }),])
       rw3$Tail_count <- data.frame(rw3$Tail_count[apply(rw3$Count,1,function(row) {
-        any(row >= env$input[[p("expmin")]])
+        any(row >= log2(env$input[[p("expmin")]]))
       }),])
       rw3$Tail <- data.frame(rw3$Tail[apply(rw3$Count,1,function(row) {
-        any(row >= env$input[[p("expmin")]])
+        any(row >= log2(env$input[[p("expmin")]]))
       }),])
       rw3$Count <- data.frame(rw3$Count[apply(rw3$Count,1,function(row) {
-        any(row >= env$input[[p("expmin")]])
+        any(row >= log2(env$input[[p("expmin")]]))
       }),])
       
       return(rw3)
