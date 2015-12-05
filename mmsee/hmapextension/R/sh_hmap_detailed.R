@@ -1,5 +1,5 @@
 #' @export
-sh_hmap_detailed <-
+sh_hmap_detailed 
   <- function(rw, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="") {
     p <- function(name) paste0(prefix,name)
     sample_labels <- ensure_reactable(sample_labels)
