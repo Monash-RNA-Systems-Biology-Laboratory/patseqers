@@ -146,5 +146,5 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
     
     plot$component_server(env)
   }
+composable_shiny_app(ui, server)
 }
-  
