@@ -147,3 +147,4 @@ sh_hmap_detailed <-
       
       plot$component_server(env)
     }
+    
