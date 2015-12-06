@@ -15,35 +15,39 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
   )
   
   ui <- shiny::tags$div(
-    shiny::titlePanel("Heatmap"),
-    shiny::p("Features are selected based on span of:"),
-    shiny::radioButtons(p("featspan"), 
-                        label="Expression or Tail length", 
-                        choices=list("Tail Length"=1, "Expression"=2), 
-                        selected=1,
-                        inline=TRUE),
-    shiny::uiOutput(p("chrs")),
-    shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10),
-    shiny::radioButtons(p("selFeat"), 
-                        label="Cluster by:", 
-                        choices=list("Tail count"=1, "Expression"=2), 
-                        selected=1,
-                        inline=TRUE),
-    shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 5, min=0,max=1000,step=1),
-    shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
-    shiny::radioButtons(p("seqGroup"), 
-                        label="Cluster/Group options", 
-                        choices=list("Cluster by row"=1, "Group by location"=2), 
-                        selected=1,
-                        inline=TRUE),
-    shiny::radioButtons("Clusterby", 
-                        label="Cluster by samples: ", 
-                        choices=list("None" = 1, "Tail length" = 2, "Expression" = 3), 
-                        selected = 1,
-                        inline=TRUE),
-    plot$component_ui,
-    parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
-  )
+        shiny::titlePanel("Heatmap"),
+        shiny::fluidRow(
+            column(3,
+        shiny::p("Features are selected based on span of:"),
+        shiny::radioButtons(p("featspan"), 
+                            label="Expression or Tail length", 
+                            choices=list("Tail Length"=1, "Expression"=2), 
+                            selected=1,
+                            inline=TRUE),
+        shiny::uiOutput(p("chrs")),
+        shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10),
+        shiny::radioButtons(p("selFeat"), 
+                            label="Cluster by:", 
+                            choices=list("Tail count"=1, "Expression"=2), 
+                            selected=1,
+                            inline=TRUE)),
+            column(3,
+        shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 5, min=0,max=1000,step=1),
+        shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
+        shiny::radioButtons(p("seqGroup"), 
+                            label="Cluster/Group options", 
+                            choices=list("Cluster by row"=1, "Group by location"=2), 
+                            selected=1,
+                            inline=TRUE),
+        shiny::radioButtons("Clusterby", 
+                            label="Cluster by samples: ", 
+                            choices=list("None" = 1, "Tail length" = 2, "Expression" = 3), 
+                            selected = 1,
+                            inline=TRUE))
+            ),
+        plot$component_ui,
+        parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
+    )
   #Processes the input list into a single dataframe with annotation and count data
   wproc <- function(env){
     proc <- reactive({
