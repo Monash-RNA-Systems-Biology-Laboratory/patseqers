@@ -215,7 +215,7 @@ pl_hmap_detailed <-
         #Text Labels
         lab1 <- textGrob("Mean tail length")
         lab2 <- textGrob("Expression")
-        lab3 <- textGrob("Gene Name")
+        lab3 <- textGrob("Gene\nName")
         lab4 <- textGrob("Row Name")
         lab5 <- textGrob("Product Name")
         lab6 <- textGrob("Chr")
