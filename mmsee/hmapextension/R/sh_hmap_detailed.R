@@ -19,28 +19,24 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
         shiny::fluidRow(
             shiny::column(3,
                           shiny::p("Features are selected based on span of:"),
-                          shiny::radioButtons(p("featspan"), 
-                                              label="Expression or Tail length", 
-                                              choices=list("Tail Length"=1, "Expression"=2), 
+                          shiny::radioButtons(p("selFeat"), 
+                                              label="Select features by:", 
+                                              choices=list("Tail count"=1, "Expression"=2), 
                                               selected=1,
                                               inline=TRUE),
                           shiny::uiOutput(p("chrs")),
-                          shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10),
-                          shiny::radioButtons(p("selFeat"), 
-                                              label="Cluster by:", 
-                                              choices=list("Tail count"=1, "Expression"=2), 
-                                              selected=1,
-                                              inline=TRUE)),
+                          shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10)
+            ),
             shiny::column(3,
                           shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 5, min=0,max=1000,step=1),
                           shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
-                          shiny::radioButtons(p("seqGroup"), 
-                                              label="Cluster/Group options", 
-                                              choices=list("Cluster by row"=1, "Group by location"=2), 
+                          shiny::radioButtons(p("roword"), 
+                                              label="Features ordered by: ", 
+                                              choices=list("Tail Length"=1, "Expression"=2, "Group by location"=3), 
                                               selected=1,
                                               inline=TRUE),
                           shiny::radioButtons("Clusterby", 
-                                              label="Cluster by samples: ", 
+                                              label="Cluster samples by: ", 
                                               choices=list("None" = 1, "Tail length" = 2, "Expression" = 3), 
                                               selected = 1,
                                               inline=TRUE))
@@ -49,14 +45,18 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
         parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
     )
     #Processes the input list into a single dataframe with annotation and count data
-    wproc <- function(env){
-        proc <- reactive({
+    
+    server <- function(env) {
+        
+        wproc <- reactive({
+            
             rw2 <- list()
             
             rw$Tail[rw$Tail_count < env$input[[p("nmin")]]] = NA
             rw2$Tail <- rw$Tail
             rw2$Count <- rw$Count
-            #Append names to grep out
+            
+            #Append names for neatness in graphic
             colnames(rw2$Tail) <- paste(colnames(rw2$Tail), "Tail")
             colnames(rw2$Count) <- paste(colnames(rw2$Count), "Count")
             rw3 <- list()
@@ -70,10 +70,13 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             rw3$annotate<- rw$Annotation[rownames(rw$Annotation) %in% rownames(rw3$Tail),]
             
             rw3$Tail_count <- rw$Tail_count[rownames(rw$Tail_count) %in% rownames(rw3$Tail),]
-            rw3$annotate <- rw3$annotate[order(rw3$annotate$chromosome, rw3$annotate$start),]
-            rw3$Tail <- rw3$Tail[order(rw3$annotate$chromosome, rw3$annotate$start),]
-            rw3$Count <- rw3$Count[order(rw3$annotate$chromosome, rw3$annotate$start),]
-            rw3$Tail_count <- rw3$Tail_count[order(rw3$annotate$chromosome, rw3$annotate$start),]
+            
+            orderedvec <- order(rw3$annotate$chromosome, rw3$annotate$start)
+            
+            rw3$annotate <- rw3$annotate[orderedvec,]
+            rw3$Tail <- rw3$Tail[orderedvec,]
+            rw3$Count <- rw3$Count[orderedvec,]
+            rw3$Tail_count <- rw3$Tail_count[orderedvec,]
             
             #Sort into order
             cvec <- rw3$annotate$chromosome
@@ -92,24 +95,19 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             #Truncate names for neatness
             
             #Trim out values if we want to
-            rw3$annotate <-data.frame(rw3$annotate[apply(rw3$Count,1,function(row) {
-                any(row >= env$input[[p("expmin")]])
-            }),])
-            rw3$Tail_count <- data.frame(rw3$Tail_count[apply(rw3$Count,1,function(row) {
+            hldvec2 <- apply(rw3$Count,1,function(row) {
                 any(row >= log2(env$input[[p("expmin")]]))
-            }),])
-            rw3$Tail <- data.frame(rw3$Tail[apply(rw3$Count,1,function(row) {
-                any(row >= log2(env$input[[p("expmin")]]))
-            }),])
-            rw3$Count <- data.frame(rw3$Count[apply(rw3$Count,1,function(row) {
-                any(row >= log2(env$input[[p("expmin")]]))
-            }),])
+            })
+            
+            rw3$annotate <-data.frame(rw3$annotate[hldvec2,])
+            rw3$Tail_count <- data.frame(rw3$Tail_count[hldvec2,])
+            rw3$Tail <- data.frame(rw3$Tail[hldvec2,])
+            rw3$Count <- data.frame(rw3$Count[hldvec2,])
+            
             
             return(rw3)
         })
-        return(proc())
-    }
-    server <- function(env) {
+        
         
         env$output[[p("chrs")]] <- shiny::renderUI({
             tmpvec <- levels(rw$Annotation$chromosome)
@@ -117,7 +115,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
         })
         env[[p("grob")]] <- reactive({
             
-            a1 <- wproc(env)
+            a1 <- wproc()
             if(env$input[[p("selFeat")]] == 1){
                 y <- a1$Tail
             } else if(env$input[[p("selFeat")]] == 2){
@@ -135,7 +133,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             selection[ order(-y_span)[ seq_len(n) ] ] <- TRUE
             
             if (sum(selection) < 1) stop("No features to show.")
-            pl_hmap_detailed(
+            ap(
                 matf1=a1$Tail[selection,,drop=FALSE],
                 matf2=a1$Count[selection,,drop=FALSE],
                 gmatf=a1$annotate[selection,,drop=FALSE],
@@ -143,8 +141,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                 sample_labels2=sample_labels(env),
                 feature_labels=feature_labels(env)[selection],
                 clusterby=env$input[[p("Clusterby")]],
-                cluster_features=env$input[[p("seqGroup")]],
-                feat_span=env$input[[p("featspan")]]
+                row_ord=env$input[[p("roword")]]
             )
         })
         
