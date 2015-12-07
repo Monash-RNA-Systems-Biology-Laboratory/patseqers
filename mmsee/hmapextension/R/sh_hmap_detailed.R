@@ -17,7 +17,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
   ui <- shiny::tags$div(
         shiny::titlePanel("Heatmap"),
         shiny::fluidRow(
-        shiny:column(3,
+        shiny::column(3,
         shiny::p("Features are selected based on span of:"),
         shiny::radioButtons(p("featspan"), 
                             label="Expression or Tail length", 
