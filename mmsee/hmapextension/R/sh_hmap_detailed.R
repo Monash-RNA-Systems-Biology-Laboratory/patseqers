@@ -27,7 +27,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                           shiny::uiOutput(p("chrs")),
                           shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10)
             ),
-            shiny::column(3,
+            shiny::column(3,    
                           shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 5, min=0,max=1000,step=1),
                           shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
                           shiny::radioButtons(p("roword"), 
@@ -133,7 +133,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             selection[ order(-y_span)[ seq_len(n) ] ] <- TRUE
             
             if (sum(selection) < 1) stop("No features to show.")
-            ap(
+            pl_hmap_detailed(
                 matf1=a1$Tail[selection,,drop=FALSE],
                 matf2=a1$Count[selection,,drop=FALSE],
                 gmatf=a1$annotate[selection,,drop=FALSE],
