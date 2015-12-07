@@ -17,7 +17,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
   ui <- shiny::tags$div(
         shiny::titlePanel("Heatmap"),
         shiny::fluidRow(
-            column(3,
+        shiny:column(3,
         shiny::p("Features are selected based on span of:"),
         shiny::radioButtons(p("featspan"), 
                             label="Expression or Tail length", 
@@ -31,7 +31,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                             choices=list("Tail count"=1, "Expression"=2), 
                             selected=1,
                             inline=TRUE)),
-            column(3,
+        shiny::column(3,
         shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 5, min=0,max=1000,step=1),
         shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
         shiny::radioButtons(p("seqGroup"), 
