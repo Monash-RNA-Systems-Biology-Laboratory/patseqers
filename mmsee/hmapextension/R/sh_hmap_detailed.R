@@ -39,7 +39,10 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                                               label="Cluster samples by: ", 
                                               choices=list("None" = 1, "Tail length" = 2, "Expression" = 3), 
                                               selected = 1,
-                                              inline=TRUE))
+                                              inline=TRUE)),
+            shiny::column(3,
+                          shiny::uiOutput(p("selCol"))
+                          )
         ),
         plot$component_ui,
         parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
@@ -52,9 +55,13 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             
             rw2 <- list()
             
+            colvec <- -which(names(rw$Tail) %in% env$input[[p("choosecol")]])
+            
             rw$Tail[rw$Tail_count < env$input[[p("nmin")]]] = NA
-            rw2$Tail <- rw$Tail
-            rw2$Count <- rw$Count
+            rw2$Tail <- rw$Tail[,-colvec]
+            rw2$Count <- rw$Count[,-colvec]
+            
+            
             
             #Append names for neatness in graphic
             colnames(rw2$Tail) <- paste(colnames(rw2$Tail), "Tail")
@@ -77,6 +84,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             rw3$Tail <- rw3$Tail[orderedvec,]
             rw3$Count <- rw3$Count[orderedvec,]
             rw3$Tail_count <- rw3$Tail_count[orderedvec,]
+            rw3$Tail_count <- rw3$Tail_count[,-colvec]
             
             #Sort into order
             cvec <- rw3$annotate$chromosome
@@ -110,8 +118,12 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
         
         
         env$output[[p("chrs")]] <- shiny::renderUI({
-            tmpvec <- levels(rw$Annotation$chromosome)
-            selectizeInput("choosechr", "Choose chromosomes to display",multiple=T,tmpvec, selected=tmpvec)
+            chrvec <- levels(rw$Annotation$chromosome)
+            selectizeInput("choosechr", "Choose chromosomes to display",multiple=T,chrvec, selected=chrvec)
+        })
+        env$output[[p("selCol")]] <- shiny::renderUI({
+            colvec <- names(rw$Tail)
+            selectizeInput("choosecol", "Choose samples to display",multiple=T,colvec, selected=colvec)
         })
         env[[p("grob")]] <- reactive({
             
