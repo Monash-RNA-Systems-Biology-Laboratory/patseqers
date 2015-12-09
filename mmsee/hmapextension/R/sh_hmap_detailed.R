@@ -35,14 +35,15 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                                               choices=list("Tail Length"=1, "Expression"=2, "Group by location"=3), 
                                               selected=1,
                                               inline=TRUE),
-                          shiny::radioButtons("Clusterby", 
-                                              label="Cluster samples by: ", 
-                                              choices=list("None" = 1, "Tail length" = 2, "Expression" = 3), 
+                          shiny::radioButtons("clusterby", 
+                                              label="Order samples by: ", 
+                                              choices=list("None" = 1, "Tail length" = 2, "Expression" = 3, "Manually order from select columns" = 4), 
                                               selected = 1,
                                               inline=TRUE)),
             shiny::column(3,
                           shiny::uiOutput(p("selCol"))
-                          )
+            )
+                          
         ),
         plot$component_ui,
         parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
@@ -60,6 +61,11 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             rw$Tail[rw$Tail_count < env$input[[p("nmin")]]] = NA
             rw2$Tail <- rw$Tail[,-colvec]
             rw2$Count <- rw$Count[,-colvec]
+            
+            if(env$input[[p("clusterby")]] == 4){
+                rw$Tail <- rw$Tail[env$input[[p("choosecol")]]]
+                rw2$Count <- rw$Count[env$input[[p("choosecol")]]]
+            }
             
             
             
@@ -152,8 +158,10 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                 sample_labels=sample_labels(env),
                 sample_labels2=sample_labels(env),
                 feature_labels=feature_labels(env)[selection],
-                clusterby=env$input[[p("Clusterby")]],
+                clusterby=env$input[[p("clusterby")]],
+                col_ord=env$input[[p("selcol")]],
                 row_ord=env$input[[p("roword")]]
+                
             )
         })
         

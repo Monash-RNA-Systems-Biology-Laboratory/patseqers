@@ -9,6 +9,7 @@ pl_hmap_detailed <- function(
     feature_labels=NULL,
     gene_labels=NULL,
     product_labels=NULL,
+    col_ord,
     row_ord
 ) {
     
@@ -76,9 +77,9 @@ pl_hmap_detailed <- function(
         y_scaled <- y_centered / sqrt(rowMeans(y_centered*y_centered, na.rm = TRUE))
         row_order <- make_o(y_scaled, enable=cf)
     }
-    
-    cluster_samples <- FALSE
-    if(clusterby == 1){
+
+        cluster_samples <- FALSE
+    if(clusterby == 1 || clusterby == 4){
         col_order <- make_o(t(y_centered), enable=cluster_samples)
     } else if(clusterby == 2){
         cluster_samples <- TRUE
