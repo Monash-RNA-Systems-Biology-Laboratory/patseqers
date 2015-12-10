@@ -44,41 +44,45 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
     )
     # Shiny's UI layout 
     ui <- shiny::tags$div(
-        
         shiny::titlePanel("Heatmap"),
-        shiny::fluidRow(
-            shiny::column(3,
-                          shiny::p("Features are selected based on span of:"),
-                          shiny::radioButtons(p("selFeat"), 
-                                              label="Select features by:", 
-                                              choices=list("Tail count"=1, "Expression"=2), 
-                                              selected=1,
-                                              inline=TRUE),
-                          shiny::uiOutput(p("chrs")),
-                          shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10)
-            ),
-            shiny::column(3,    
-                          shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 5, min=0,max=1000,step=1),
-                          shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
-                          shiny::radioButtons(p("roword"), 
-                                              label="Features ordered by: ", 
-                                              choices=list("Tail Length"=1, "Expression"=2, "Group by location"=3), 
-                                              selected=1,
-                                              inline=TRUE),
-                          shiny::radioButtons("clusterby", 
-                                              label="Order samples by: ", 
-                                              choices=list("None" = 1, "Tail length" = 2, "Expression" = 3, "Manually order from select columns" = 4), 
-                                              selected = 1,
-                                              inline=TRUE)),
-            shiny::column(3,
-                          shiny::uiOutput(p("selCol")),
-                          shinyURL::shinyURL.ui()
-            )
-                          
-        ),
-        plot$component_ui,
-        parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
-    )
+            shiny::tabsetPanel(
+                shiny::tabPanel("Options",
+                    shiny::fluidRow(
+                        shiny::column(3,
+                                      shiny::p("Features are selected based on span of:"),
+                                      shiny::radioButtons(p("selFeat"), 
+                                                          label="Select features by:", 
+                                                          choices=list("Tail count"=1, "Expression"=2), 
+                                                          selected=1,
+                                                          inline=TRUE),
+                                      shiny::uiOutput(p("chrs"))
+                                      ),
+                        shiny::column(3,
+                                      shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10),
+                                      shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 5, min=0,max=1000,step=1),
+                                      shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
+                                      shiny::radioButtons(p("roword"), 
+                                                          label="Features ordered by: ", 
+                                                          choices=list("Tail Length"=1, "Expression"=2, "Group by location"=3), 
+                                                          selected=1,
+                                                          inline=TRUE),
+                                      shiny::radioButtons("clusterby", 
+                                                          label="Order samples by: ", 
+                                                          choices=list("None" = 1, "Tail length" = 2, "Expression" = 3, "Manually order from select columns" = 4), 
+                                                          selected = 1,
+                                                          inline=TRUE)
+                                      ),
+                        shiny::column(3,
+                                      shiny::uiOutput(p("selCol")),
+                                      shinyURL::shinyURL.ui()
+                        )
+                                      
+                    )),
+                shiny::tabPanel("Plot",plot$component_ui),
+                parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
+                )
+            
+        )
     
     # Shiny's server
     server <- function(env) {
