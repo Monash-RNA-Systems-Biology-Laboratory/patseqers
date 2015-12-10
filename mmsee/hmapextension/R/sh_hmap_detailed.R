@@ -1,12 +1,31 @@
 #' @title Produces detailed heatmap
+#' @details 
+#' Workhorse function for this package.
+#'      
+#' @param rw List of dataframes 
+#' Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):
+#' Counts - Genewise counts of expression
+#' Tail - Mean tail length
+#' Tail_counts - Number of poly-A tails counted
+#' Annotation - Information regarding the annotation information
+#'      Gene name, chromosome, gene product, biotype etc...
+#'  
+#' @param sample_labels Sample labels
+#' @param sample_labels2 Sample labels (second plot)
+#' @param feature_labels Feature labels
+#' @param prefix Prefix for plot
 #' 
-#' @export
+#' @return 
+#' Returns a composable shiny app object
+#' 
 #' @import varistran
+#' @export
 sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="") {
     p <- function(name) paste0(prefix,name)
     sample_labels <- ensure_reactable(sample_labels)
     sample_labels2 <- ensure_reactable(sample_labels2)
     feature_labels <- ensure_reactable(feature_labels)
+    
     plot <- shiny_p(
         callback = function(env) {
             print(env[[p("grob")]]())
@@ -22,7 +41,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             env$seldat()$ann
         }
     )
-    
+    # Shiny's UI layout 
     ui <- shiny::tags$div(
         shiny::titlePanel("Heatmap"),
         shiny::fluidRow(
@@ -57,10 +76,10 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
         plot$component_ui,
         parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
     )
-    #Processes the input list into a single dataframe with annotation and count data
     
+    # Shiny's server
     server <- function(env) {
-        
+        # Processes the input from rw into the correct length and returns a list of 4 data frames
         wproc <- reactive({
             
             rw2 <- list()
@@ -127,6 +146,8 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             
             return(rw3)
         })
+        
+        # Processes the selection of rows by calculating maximum span in either tail length of expression
         selproc <- reactive({
             a1 <- wproc()
             if(env$input[[p("selFeat")]] == 1){
@@ -152,9 +173,9 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             rtVal$a1 <- a1
             return(rtVal)
         })
-        
+        # Enables env to hold the data from selproc
         env$seldat <- selproc
-        
+        # RenderUI output for shiny, dynamically generate two selctize elements ---
         env$output[[p("chrs")]] <- shiny::renderUI({
             tmpvec <- levels(rw$Annotation$chromosome)
             selectizeInput("choosechr", "Choose chromosomes to display",multiple=T,tmpvec, selected=tmpvec)
@@ -163,6 +184,8 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             colvec <- names(rw$Tail)
             selectizeInput("choosecol", "Choose samples to display",multiple=T,colvec, selected=colvec)
         })
+        #---
+        
         env[[p("grob")]] <- reactive({
             
             selrt <- selproc()
@@ -177,7 +200,6 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                 sample_labels2=sample_labels(env),
                 feature_labels=feature_labels(env)[selection],
                 clusterby=env$input[[p("clusterby")]],
-                col_ord=env$input[[p("selcol")]],
                 row_ord=env$input[[p("roword")]]   
             )
         })

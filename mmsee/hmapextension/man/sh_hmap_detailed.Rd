@@ -7,4 +7,27 @@
 sh_hmap_detailed(rw, sample_labels = NULL, sample_labels2 = NULL,
   feature_labels = NULL, prefix = "")
 }
+\arguments{
+\item{rw}{List of dataframes 
+Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):
+Counts - Genewise counts of expression
+Tail - Mean tail length
+Tail_counts - Number of poly-A tails counted
+Annotation - Information regarding the annotation information
+     Gene name, chromosome, gene product, biotype etc...}
+
+\item{sample_labels}{Sample labels}
+
+\item{sample_labels2}{Sample labels (second plot)}
+
+\item{feature_labels}{Feature labels}
+
+\item{prefix}{Prefix for plot}
+}
+\value{
+Returns a composable shiny app object
+}
+\details{
+Workhorse function for this package.
+}
 

@@ -4,6 +4,8 @@
 make_o <-
 function(mat, enable=TRUE, fast=FALSE) {
     # Note: paths are given ordered by order
+    # Following line is to deal with NA values we introduces previously
+    #    This method of dealing with them may change in future
     mat[is.na(mat)] = 0.001
     if (nrow(mat) < 3 || !enable) {
         list(

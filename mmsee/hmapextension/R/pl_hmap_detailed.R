@@ -1,4 +1,18 @@
 #' @title Printable heatmap grob
+#' @details 
+#' Produces a print-able heatmap grob
+#' 
+#' @param matf1 Data frame of Tail length
+#' @param matf2 Data frame of Counts (genewise expression) (Should already be normalised)
+#' @param gmatf Data frame of annotation data
+#' @param clusterby Cluster columns by tail length or expression (defaults to None)
+#' @param sample_labels Sample labels
+#' @param sample_labels2 Sample labels (second plot)
+#' @param feature_labels Feature labels
+#' @param gene_labels Gene labels
+#' @param product_labels Product labels
+#' @param row_ord Order rows by tail length or expression
+#' 
 #' @import varistran
 #' @export
 
@@ -12,8 +26,7 @@ pl_hmap_detailed <- function(
     feature_labels=NULL,
     gene_labels=NULL,
     product_labels=NULL,
-    col_ord,
-    row_ord
+    row_ord=1
 ) {
     
     y <- as.matrix(matf1)
@@ -70,6 +83,7 @@ pl_hmap_detailed <- function(
     } else {
         cf <- FALSE
     }
+    # Set up row ordering from input
     if(row_ord==1){
         y_scaled <- y_centered / sqrt(rowMeans(y_centered*y_centered, na.rm = TRUE))
         row_order <- make_o(y_scaled, enable=cf)
@@ -80,9 +94,11 @@ pl_hmap_detailed <- function(
         y_scaled <- y_centered / sqrt(rowMeans(y_centered*y_centered, na.rm = TRUE))
         row_order <- make_o(y_scaled, enable=cf)
     }
-
-        cluster_samples <- FALSE
-    if(clusterby == 1 || clusterby == 4){
+    
+    # Set up column ordering based on input
+    cluster_samples <- FALSE
+    #TODO: 1 and 4 do the same thing. Make 1 the original order no matter what, 4 manually orders
+    if(clusterby == 1 || clusterby == 4){ 
         col_order <- make_o(t(y_centered), enable=cluster_samples)
     } else if(clusterby == 2){
         cluster_samples <- TRUE
@@ -212,6 +228,7 @@ pl_hmap_detailed <- function(
         vp=viewport(xscale=c(0,ncol(z)),yscale=c(0,1))
     )
     
+    #Set up frames and pack them together into a larger grob
     frame <- frameGrob(layout=grid.layout(nrow=4,ncol=9))
     #Clustering sample dendrogram
     frame <- packGrob(frame, varistran_grob(col_ordering_grob,height="inherit",pad=pad), row=1,col=2)
