@@ -1,4 +1,7 @@
+#' @title Printable heatmap grob
+#' @import varistran
 #' @export
+
 pl_hmap_detailed <- function(
     matf1,
     matf2,
@@ -94,7 +97,7 @@ pl_hmap_detailed <- function(
     
     col_ordering_grob <- ordering_grob(col_order)
     
-    #Heatmap 1 (Tail lenght)
+    #Heatmap 1 (Tail length)
     heatmap <- heatmap_grob(
         y_centered[row_order$order,col_order$order,drop=F],
         signed=TRUE,
@@ -179,7 +182,7 @@ pl_hmap_detailed <- function(
         x=rep(0,nrow(y)),
         y=seq_len(nrow(y))-0.5,
         just=c(0,0.5),
-        vp=viewport(xscale=c(0,1),yscale=c(0,nrow(y)))
+        vp=viewport(xscale=c(0,1),yscale=c(0,nrow(y)), name="prodVP")
     )
     
     chrom_label_grob <- shrinktext_grob(

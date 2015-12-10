@@ -1,4 +1,6 @@
+#' Ordering for rows and columns
 #' @export
+
 make_o <-
 function(mat, enable=TRUE, fast=FALSE) {
     # Note: paths are given ordered by order

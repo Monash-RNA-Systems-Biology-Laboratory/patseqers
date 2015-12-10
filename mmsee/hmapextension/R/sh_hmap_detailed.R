@@ -1,17 +1,26 @@
+#' @title Produces detailed heatmap
+#' 
 #' @export
+#' @import varistran
 sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="") {
     p <- function(name) paste0(prefix,name)
     sample_labels <- ensure_reactable(sample_labels)
     sample_labels2 <- ensure_reactable(sample_labels2)
     feature_labels <- ensure_reactable(feature_labels)
-    plot <- shiny_plot(
+    plot <- shiny_p(
         callback = function(env) {
             print(env[[p("grob")]]())
+        },
+        rorder = function(env) {
+            env[[p("grob")]]()$info$row_order$order
         },
         width=1250,
         height=900,
         dlname="heatmap",
-        prefix=p("plot_")
+        prefix=p("plot_"),
+        selin = function(env){
+            env$seldat()$ann
+        }
     )
     
     ui <- shiny::tags$div(
@@ -77,9 +86,6 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             rw3$Tail <- rw2$Tail
             rw3$Count <- varistran::vst(rw2$Count)
             
-            rwm <- list()
-            rwm$data <- merge(rw3$Tail, rw3$Count, by=0)
-            rownames(rwm$data) <- rwm$data$Row.names
             rw3$annotate<- rw$Annotation[rownames(rw$Annotation) %in% rownames(rw3$Tail),]
             
             rw3$Tail_count <- rw$Tail_count[rownames(rw$Tail_count) %in% rownames(rw3$Tail),]
@@ -100,13 +106,14 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             rw3$Tail <- rw3$Tail[cvec,]
             rw3$Tail_count <- rw3$Tail_count[cvec,]
             rw3$Count <- rw3$Count[cvec,]
+            
+            #Truncate names for neatness
             rownames(rw3$Count) <- substr(rownames(rw3$Count), 1, 17)
             rownames(rw3$Tail) <- substr(rownames(rw3$Tail), 1, 17)
             rownames(rw3$Tail_count) <- substr(rownames(rw3$Tail_count), 1, 17)
             rownames(rw3$annotate) <- substr(rownames(rw3$annotate), 1, 17)
             rw3$annotate$product <- substr(rw3$annotate$product , 1, 76)
             rw3$annotate$gene <- substr(rw3$annotate$gene, 1, 11)
-            #Truncate names for neatness
             
             #Trim out values if we want to
             hldvec2 <- apply(rw3$Count,1,function(row) {
@@ -118,28 +125,15 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             rw3$Tail <- data.frame(rw3$Tail[hldvec2,])
             rw3$Count <- data.frame(rw3$Count[hldvec2,])
             
-            
             return(rw3)
         })
-        
-        
-        env$output[[p("chrs")]] <- shiny::renderUI({
-            chrvec <- levels(rw$Annotation$chromosome)
-            selectizeInput("choosechr", "Choose chromosomes to display",multiple=T,chrvec, selected=chrvec)
-        })
-        env$output[[p("selCol")]] <- shiny::renderUI({
-            colvec <- names(rw$Tail)
-            selectizeInput("choosecol", "Choose samples to display",multiple=T,colvec, selected=colvec)
-        })
-        env[[p("grob")]] <- reactive({
-            
+        selproc <- reactive({
             a1 <- wproc()
             if(env$input[[p("selFeat")]] == 1){
                 y <- a1$Tail
             } else if(env$input[[p("selFeat")]] == 2){
                 y <- a1$Count
             }
-            
             y <- ensure_reactable(y)
             
             n <- env$input[[p("n")]]
@@ -151,17 +145,40 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             selection[ order(-y_span)[ seq_len(n) ] ] <- TRUE
             
             if (sum(selection) < 1) stop("No features to show.")
+            
+            rtVal <- list()
+            rtVal$sel <- selection
+            rtVal$ann <- a1$annotate[selection,,drop=FALSE]
+            rtVal$a1 <- a1
+            return(rtVal)
+        })
+        
+        env$seldat <- selproc
+        
+        env$output[[p("chrs")]] <- shiny::renderUI({
+            tmpvec <- levels(rw$Annotation$chromosome)
+            selectizeInput("choosechr", "Choose chromosomes to display",multiple=T,tmpvec, selected=tmpvec)
+        })
+        env$output[[p("selCol")]] <- shiny::renderUI({
+            colvec <- names(rw$Tail)
+            selectizeInput("choosecol", "Choose samples to display",multiple=T,colvec, selected=colvec)
+        })
+        env[[p("grob")]] <- reactive({
+            
+            selrt <- selproc()
+            splitDF <- selrt$a1
+            selection <- selrt$sel
+            
             pl_hmap_detailed(
-                matf1=a1$Tail[selection,,drop=FALSE],
-                matf2=a1$Count[selection,,drop=FALSE],
-                gmatf=a1$annotate[selection,,drop=FALSE],
+                matf1=splitDF$Tail[selection,,drop=FALSE],
+                matf2=splitDF$Count[selection,,drop=FALSE],
+                gmatf=splitDF$annotate[selection,,drop=FALSE],
                 sample_labels=sample_labels(env),
                 sample_labels2=sample_labels(env),
                 feature_labels=feature_labels(env)[selection],
                 clusterby=env$input[[p("clusterby")]],
                 col_ord=env$input[[p("selcol")]],
-                row_ord=env$input[[p("roword")]]
-                
+                row_ord=env$input[[p("roword")]]   
             )
         })
         
