@@ -3,11 +3,11 @@
 #' Workhorse function for this package.
 #'      
 #' @param rw List of dataframes 
-#' Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):\n
-#' Counts - Genewise counts of expression\n
-#' Tail - Mean tail length\n
-#' Tail_counts - Number of poly-A tails counted\n
-#' Annotation - Information regarding the annotation information\n
+#' Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):
+#' Counts - Genewise counts of expression
+#' Tail - Mean tail length
+#' Tail_counts - Number of poly-A tails counted
+#' Annotation - Information regarding the annotation information
 #'      Gene name, chromosome, gene product, biotype etc...
 #'  
 #' @param sample_labels Sample labels
@@ -21,6 +21,7 @@
 #' @import varistran
 #' @import shinyURL
 #' @export
+
 sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="") {
     p <- function(name) paste0(prefix,name)
     sample_labels <- ensure_reactable(sample_labels)
