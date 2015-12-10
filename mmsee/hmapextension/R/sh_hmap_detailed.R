@@ -3,11 +3,11 @@
 #' Workhorse function for this package.
 #'      
 #' @param rw List of dataframes 
-#' Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):\n
-#' Counts - Genewise counts of expression\n
-#' Tail - Mean tail length\n
-#' Tail_counts - Number of poly-A tails counted\n
-#' Annotation - Information regarding the annotation information\n
+#' Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):
+#' Counts - Genewise counts of expression
+#' Tail - Mean tail length
+#' Tail_counts - Number of poly-A tails counted
+#' Annotation - Information regarding the annotation information
 #'      Gene name, chromosome, gene product, biotype etc...
 #'  
 #' @param sample_labels Sample labels
@@ -19,7 +19,6 @@
 #' Returns a composable shiny app object
 #' 
 #' @import varistran
-#' @import shinyURL
 #' @export
 sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="") {
     p <- function(name) paste0(prefix,name)
@@ -44,7 +43,6 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
     )
     # Shiny's UI layout 
     ui <- shiny::tags$div(
-        
         shiny::titlePanel("Heatmap"),
         shiny::fluidRow(
             shiny::column(3,
@@ -71,8 +69,7 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                                               selected = 1,
                                               inline=TRUE)),
             shiny::column(3,
-                          shiny::uiOutput(p("selCol")),
-                          shinyURL::shinyURL.ui()
+                          shiny::uiOutput(p("selCol"))
             )
                           
         ),
@@ -82,7 +79,6 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
     
     # Shiny's server
     server <- function(env) {
-        shinyURL::shinyURL.server(env$session)
         # Processes the input from rw into the correct length and returns a list of 4 data frames
         wproc <- reactive({
             
@@ -98,6 +94,8 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                 rw$Tail <- rw$Tail[env$input[[p("choosecol")]]]
                 rw2$Count <- rw$Count[env$input[[p("choosecol")]]]
             }
+            
+            
             
             #Append names for neatness in graphic
             colnames(rw2$Tail) <- paste(colnames(rw2$Tail), "Tail")

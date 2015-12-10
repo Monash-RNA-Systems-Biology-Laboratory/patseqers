@@ -13,8 +13,6 @@
 #' @param rorder Row order from sh_hmap_detailed
 #' 
 #' @import gridBase
-#' @import shinyURL
-#' @import DT
 #' @export
 
 shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", selin, rorder) {
@@ -37,9 +35,8 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
     )
     
     # Shiny's server 
-    server <- function(env) { 
+    server <- function(env) {
         output <- env$output
-        
         
         i <- function(name) env$input
         
@@ -90,7 +87,8 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
             
             popViewport()
             
-        })
+        }
+        )
         
         # Download handlers to download heatmap grob---
         output[[p("pdf")]] <- shiny::downloadHandler(
