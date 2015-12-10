@@ -1,6 +1,6 @@
 Package: hmapextension
 Title: Produced an interactive heatmap resembling Tailtools output
-Version: 0.1
+Version: 0.1.1
 Date: 2015-12-02
 Author: Michael See
 Maintainer: Michael See <mmsee2@student.monash.edu>
@@ -10,5 +10,6 @@ License: LGPL-2.1
 Depends:
     varistran,
     grid,
-    gridBase
+    gridBase,
+    shinyURL
 RoxygenNote: 5.0.1
