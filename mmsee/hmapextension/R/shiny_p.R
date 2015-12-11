@@ -96,7 +96,7 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
         output[[p("pdf")]] <- shiny::downloadHandler(
             paste0(dlname,".pdf"),
             function(filename) {
-                pdf(filename, width=i("width")/72, height=i("height")/72)
+                pdf(filename, width=env$input[[p("width")]]/72, height=env$input[[p("height")]]/72)
                 callback(env)
                 dev.off()
             }
@@ -104,7 +104,7 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
         output[[p("eps")]] <- shiny::downloadHandler(
             paste0(dlname,".eps"),
             function(filename) {
-                postscript(filename, width=i("width")/72, height=i("height")/72,
+                postscript(filename, width=env$input[[p("width")]]/72, height=env$input[[p("height")]]/72,
                            paper="special", onefile=FALSE, horizontal=FALSE)
                 callback(env)
                 dev.off()
