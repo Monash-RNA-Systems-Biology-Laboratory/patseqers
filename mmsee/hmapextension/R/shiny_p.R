@@ -75,8 +75,9 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
         })
         
         # Data table output with selected rows
-        output[[p("datab")]] <- DT::renderDataTable(calcdt(), server=F,
-                                                        options = list(searchHighlight = TRUE)
+        output[[p("datab")]] <- DT::renderDataTable(calcdt(), 
+                                                    server=F,
+                                                    options = list(searchHighlight = TRUE)
         )
 
         # Produces plot output
@@ -85,7 +86,9 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
             plot.new()
             callback(env)
             seekViewport("prodVP")
-            par(new=T, plt=gridPLT())
+            pltvec <- gridPLT()
+            pltvec <- c(0, 1, pltvec[3], pltvec[4])
+            par(new=T, plt=pltvec)
             plot(1,type="n", axes=F, xlab ="",ylab="",xlim=c(0,50),ylim=c(0,50))
             
             popViewport()
