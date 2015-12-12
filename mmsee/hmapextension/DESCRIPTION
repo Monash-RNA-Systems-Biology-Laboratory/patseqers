@@ -12,4 +12,6 @@ Depends:
     grid,
     gridBase,
     shinyURL
+Suggests:
+    nesoni
 RoxygenNote: 5.0.1
