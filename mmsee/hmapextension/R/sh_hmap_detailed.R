@@ -79,9 +79,9 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                                 )
                                 
                             )),
-            shiny::tabPanel("Plot",plot$component_ui),
-            parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
-        )
+            shiny::tabPanel("Plot",plot$component_ui)
+        ),
+        parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
         
     )
     
