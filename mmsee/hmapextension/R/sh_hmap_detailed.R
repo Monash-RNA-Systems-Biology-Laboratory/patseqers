@@ -14,6 +14,7 @@
 #' @param sample_labels2 Sample labels (second plot)
 #' @param feature_labels Feature labels
 #' @param prefix Prefix for plot
+#' @param species Species of the data. Currently supports Human (Hs), Saccharomyces cerevisiae (Sc), Caenorhabditis elegans (Ce), Mus musculus (Mm)
 #' 
 #' @return 
 #' Returns a composable shiny app object
@@ -22,11 +23,15 @@
 #' @import shinyURL
 #' @export
 
-sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="") {
+sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="", gotable=NULL, species=NULL) {
+    if(is.null(species) || sum(species == c("Hs", "Sc", "Ce", "Mm"))!=1)
+        stop("Species argument missing or incorrect")
+    
     p <- function(name) paste0(prefix,name)
     sample_labels <- ensure_reactable(sample_labels)
     sample_labels2 <- ensure_reactable(sample_labels2)
     feature_labels <- ensure_reactable(feature_labels)
+    gotable <- ensure_reactable(gotable)
     
     plot <- shiny_p(
         callback = function(env) {
@@ -41,7 +46,8 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
         prefix=p("plot_"),
         selin = function(env){
             env$seldat()$ann
-        }
+        },
+        spp=species
     )
     # Shiny's UI layout 
     ui <- shiny::tags$div(
@@ -67,9 +73,9 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                                                                   choices=list("Tail Length"=1, "Expression"=2, "Group by location"=3), 
                                                                   selected=1,
                                                                   inline=TRUE),
-                                              shiny::radioButtons("clusterby", 
+                                              shiny::radioButtons(p("clusterby"), 
                                                                   label="Order samples by: ", 
-                                                                  choices=list("None" = 1, "Tail length" = 2, "Expression" = 3, "Manually order from select columns" = 4), 
+                                                                  choices=list("Tail length" = 2, "Expression" = 3, "Manually order from select columns" = 1), 
                                                                   selected = 1,
                                                                   inline=TRUE)
                                 ),
@@ -79,7 +85,9 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                                 )
                                 
                             )),
-            shiny::tabPanel("Plot",plot$component_ui)
+            shiny::tabPanel("Plot",plot$component_ui),
+            shiny::tabPanel("GO analysis of selection",
+                            shiny::tableOutput("tabout"))
         ),
         parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
         
@@ -187,9 +195,18 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
             rtVal$ann <- a1$annotate[selection,,drop=FALSE]
             rtVal$a1 <- a1
             return(rtVal)
+        })        
+        
+        goDBret <- reactive({
+            return(env$output[[p("GOsrch")]])
         })
-        # Enables env to hold the data from selproc
+        # Enables env to hold the data from sh_hmap_detailed
         env$seldat <- selproc
+        env$goDB <- goDBret
+        
+        env$output[[p("debugOut")]] <- shiny::renderText({
+            names(env)
+        })
         # RenderUI output for shiny, dynamically generate two selctize elements ---
         env$output[[p("chrs")]] <- shiny::renderUI({
             tmpvec <- levels(rw$Annotation$chromosome)
@@ -218,8 +235,11 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                 row_ord=env$input[[p("roword")]]   
             )
         })
-        
         plot$component_server(env)
+        
+        env$output[[p("tabout")]] <- shiny::renderTable({
+            env$gotab()
+        })
     }
     composable_shiny_app(ui, server)
 }

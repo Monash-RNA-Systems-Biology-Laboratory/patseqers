@@ -5,7 +5,7 @@
 \title{Integrates heatmap into shiny}
 \usage{
 shiny_p(callback, width = 500, height = 500, dlname = "plot",
-  prefix = "", selin, rorder)
+  prefix = "", selin, rorder, spp)
 }
 \arguments{
 \item{callback}{Heatmap Grob from pl_hmap_detailed}
@@ -21,6 +21,8 @@ shiny_p(callback, width = 500, height = 500, dlname = "plot",
 \item{selin}{Selection of genes from sh_hmap_detailed}
 
 \item{rorder}{Row order from sh_hmap_detailed}
+
+\item{spp}{Species of the data (Hs, Sc, Ce, Mm)}
 }
 \details{
 Shiny wrapper for sh_hmap_detailed

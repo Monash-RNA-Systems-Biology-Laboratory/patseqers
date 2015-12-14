@@ -11,7 +11,11 @@ Depends:
     varistran,
     grid,
     gridBase,
-    shinyURL
+    shinyURL,
+    org.Sc.sgd.db,
+    org.Hs.eg.db,
+    org.Ce.eg.db,
+    org.Mm.eg.db
 Suggests:
     nesoni
 RoxygenNote: 5.0.1

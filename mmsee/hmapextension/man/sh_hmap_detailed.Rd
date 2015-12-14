@@ -5,7 +5,7 @@
 \title{Produces detailed heatmap}
 \usage{
 sh_hmap_detailed(rw, sample_labels = NULL, sample_labels2 = NULL,
-  feature_labels = NULL, prefix = "")
+  feature_labels = NULL, prefix = "", gotable = NULL, species = NULL)
 }
 \arguments{
 \item{rw}{List of dataframes 
@@ -23,6 +23,8 @@ Annotation - Information regarding the annotation information
 \item{feature_labels}{Feature labels}
 
 \item{prefix}{Prefix for plot}
+
+\item{species}{Species of the data. Currently supports Human (Hs), Saccharomyces cerevisiae (Sc), Caenorhabditis elegans (Ce), Mus musculus (Mm)}
 }
 \value{
 Returns a composable shiny app object

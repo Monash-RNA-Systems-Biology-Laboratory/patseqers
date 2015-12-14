@@ -11,15 +11,23 @@
 #' @param prefix Prefix
 #' @param selin Selection of genes from sh_hmap_detailed
 #' @param rorder Row order from sh_hmap_detailed
+#' @param spp Species of the data (Hs, Sc, Ce, Mm)
 #' 
 #' @import gridBase
 #' @import shinyURL
 #' @import DT
+#' @import org.Sc.sgd.db
+#' @import org.Hs.eg.db
+#' @import org.Ce.eg.db
+#' @import org.Mm.eg.db
+#' @import xtable
+#' @import GOstats
 #' @export
 
-shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", selin, rorder) {
+shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", selin, rorder,spp) {
     selin <- ensure_reactable(selin)
     rorder <- ensure_reactable(rorder)
+    #gosrch <- ensure_reactable(gosrch)
     
     p <- function(name) paste0(prefix,name)
     
@@ -45,6 +53,7 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
         
         # Renders plot and enables a brush object
         output[[p("plotui")]] <- shiny::renderUI({
+            
             shiny::plotOutput(p("plot"),
                               brush = brushOpts(
                                   id ="plot_brush",  
@@ -56,6 +65,56 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
                               height=env$input[[p("height")]]
             )
         })
+        
+        gosrch <- reactive({
+            selrows <- calcdt()
+            allrows <- selin(env)
+            if(nrow(selrows)==nrow(allrows) || nrow(selrows)==0)
+                stop("Inappropriate selection for GO term analysis (One set is of size 0)")
+            
+            if(spp == "Sc"){
+                library(org.Sc.eg.db)
+                annlabel <- "org.Sc.sgd.db"
+                lib <- org.Sc.sgd.db
+            }else if(spp == "Hs"){
+                library(org.Hs.eg.db)
+                annlabel <- "org.Hs.eg.db"
+                lib <- org.Hs.eg.db
+            }else if(spp == "Ce"){
+                library(org.Ce.eg.db)
+                annlabel <- "org.Ce.eg.db"
+                lib <- org.Ce.eg.db
+            }else if(spp == "Mm"){
+                library(org.Mm.eg.db)
+                annlabel <- "org.Mm.eg.db"
+                lib <- org.Mm.eg.db
+            }
+            
+            colkp <- c("SYMBOL", "GENENAME", "ENTREZID")
+            remrows <- rownames(allrows[-which(rownames(selrows) %in% rownames(allrows)),])
+            selrowsname <- rownames(selrows)
+            unisel <- select(lib, keys=remrows, columns=colkp, keytype="ENSEMBL")
+            intsel <- select(lib, keys=selrowsname, columns=colkp, keytype="ENSEMBL")
+            #Deduplicate rows
+            unisel <- unisel[-which(duplicated(unisel$ENTREZID)),]
+            intsel <- intsel[-which(duplicated(intsel$ENTREZID)),]
+            #Remove rows where ETREZID is NA
+            unisel <- unisel[-which(is.na(unisel$ENTREZID)),]
+            intsel <- intsel[-which(is.na(intsel$ENTREZID)),]
+
+            #Setup hyperG or fischer's exact test params
+            pcutoff = 0.05
+            hgparam <- new("GOHyperGParams",annotation=annlabel,geneIds=intsel,universeGeneIds=unisel,ontology="BP",pvalueCutoff=pcutoff,testDirection="over")
+            hg <- hyperGTest(hgparam)
+            hg.pv <- pvalues(hg)
+            hgadjpv <- p.adjust(hg.pv,'fdr')
+            sigGOID <- names(hgadjpv[hgadjpv < pcutoff])
+            df <- summary(hg)
+            xtable(df)
+        })
+        
+        env$gotab <- gosrch
+        
         
         # Works out if any rows are selected and returns selected rows
         # Calculates rows based on y-coordinates from brush output
@@ -95,7 +154,7 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
             
         })
         
-        # Download handlers to download heatmap grob---
+        # Download handlers---
         output[[p("pdf")]] <- shiny::downloadHandler(
             paste0(dlname,".pdf"),
             function(filename) {
@@ -113,6 +172,7 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
                 dev.off()
             }
         )
+        
         #---
     }
     
