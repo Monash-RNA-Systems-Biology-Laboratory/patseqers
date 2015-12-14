@@ -8,6 +8,7 @@ Description: Takes a grouped table as input, and produces a heatmap with some
     interactivity Interactivity is from the shiny library
 License: LGPL-2.1
 Depends:
+    shiny,
     varistran,
     grid,
     gridBase,

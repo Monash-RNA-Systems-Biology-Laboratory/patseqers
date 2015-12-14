@@ -19,6 +19,7 @@
 #' @return 
 #' Returns a composable shiny app object
 #' 
+#' @import shiny
 #' @import varistran
 #' @import shinyURL
 #' @export
