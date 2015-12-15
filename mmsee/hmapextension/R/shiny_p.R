@@ -73,7 +73,7 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
                 stop("Inappropriate selection for GO term analysis (One set is of size 0)")
             
             if(spp == "Sc"){
-                library(org.Sc.eg.db)
+                library(org.Sc.sgd.db)
                 annlabel <- "org.Sc.sgd.db"
                 lib <- org.Sc.sgd.db
             }else if(spp == "Hs"){
