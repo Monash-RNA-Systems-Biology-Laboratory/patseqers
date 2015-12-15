@@ -118,7 +118,10 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
             hg.pv <- pvalues(hg)
             hgadjpv <- p.adjust(hg.pv,'fdr')
             sigGOID <- names(hgadjpv[hgadjpv < gc])
-            df <- summary(hg)            
+            df <- summary(hg)
+            df[,3:4] <- format(signif(df[,3:4], digits=6), format="fg")
+            df$Pvalue <- format(df$Pvalue, scientific=T)
+            return(df)
         })
         
         env$gotab <- gosrch
