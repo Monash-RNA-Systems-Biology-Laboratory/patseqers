@@ -20,7 +20,6 @@
 #' @import org.Hs.eg.db
 #' @import org.Ce.eg.db
 #' @import org.Mm.eg.db
-#' @import xtable
 #' @import GOstats
 #' @export
 
@@ -119,9 +118,7 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
             hg.pv <- pvalues(hg)
             hgadjpv <- p.adjust(hg.pv,'fdr')
             sigGOID <- names(hgadjpv[hgadjpv < gc])
-            df <- summary(hg)
-            xtab <- xtable(df,digits=10)
-            return(xtab)
+            df <- summary(hg)            
         })
         
         env$gotab <- gosrch

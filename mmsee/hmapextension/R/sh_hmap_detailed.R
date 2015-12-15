@@ -56,6 +56,7 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
             env$otype()
         }
     )
+    
     # Shiny's UI layout 
     ui <- shiny::tags$div(
         shiny::titlePanel("Heatmap"),
@@ -74,7 +75,7 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
                                 shiny::column(3,
                                               shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10),
                                               shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 50, min=0,max=1000,step=1),
-                                              shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
+                                              shiny::numericInput(p("expmin"), "Exclude genes with expression counts below: ", 0, min=0,max=1500,step=1),
                                               shiny::radioButtons(p("roword"), 
                                                                   label="Features ordered by: ", 
                                                                   choices=list("Tail Length"=1, "Expression"=2, "Group by location"=3), 
@@ -101,7 +102,8 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
                                                                      selected=1,
                                                                      inline=TRUE))
                             ),
-                            shiny::tableOutput("tabout"))
+                            DT::dataTableOutput(p("gotab")))
+                            #shiny::tableOutput("tabout"))
         ),
         parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
         
@@ -264,9 +266,13 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
         })
         plot$component_server(env)
         
-        env$output[[p("tabout")]] <- shiny::renderTable({
-            env$gotab()
-        })
+#         env$output[[p("tabout")]] <- shiny::renderTable({
+#             env$gotab()
+#         })
+        env$output[[p("gotab")]] <- DT::renderDataTable(env$gotab(), 
+                                    server=F,
+                                    options = list(searchHighlight = TRUE)
+        )
     }
     composable_shiny_app(ui, server)
 }
