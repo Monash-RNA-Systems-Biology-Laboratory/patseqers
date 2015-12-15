@@ -2,7 +2,7 @@
 #' @details 
 #' Workhorse function for this package.
 #'      
-#' @param rw List of dataframes 
+#' @param datfr List of dataframes 
 #' Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):
 #' Counts - Genewise counts of expression
 #' Tail - Mean tail length
@@ -24,7 +24,7 @@
 #' @import shinyURL
 #' @export
 
-sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="", gotable=NULL, species=NULL) {
+sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="", gotable=NULL, species=NULL) {
     if(is.null(species) || sum(species == c("Hs", "Sc", "Ce", "Mm"))!=1)
         stop("Species argument missing or incorrect")
     
@@ -60,14 +60,14 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
                                               shiny::p("Features are selected based on span of:"),
                                               shiny::radioButtons(p("selFeat"), 
                                                                   label="Select features by:", 
-                                                                  choices=list("Tail count"=1, "Expression"=2), 
+                                                                  choices=list("Tail length"=1, "Expression"=2), 
                                                                   selected=1,
                                                                   inline=TRUE),
                                               shiny::uiOutput(p("chrs"))
                                 ),
                                 shiny::column(3,
                                               shiny::numericInput(p("n"), "Number of features to show", 50, min=10,max=2000,step=10),
-                                              shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 5, min=0,max=1000,step=1),
+                                              shiny::numericInput(p("nmin"), "Trim Tail Counts below value to NA", 50, min=0,max=1000,step=1),
                                               shiny::numericInput(p("expmin"), "Exclude rows with low expression counts", 0, min=0,max=1500,step=1),
                                               shiny::radioButtons(p("roword"), 
                                                                   label="Features ordered by: ", 
@@ -97,78 +97,83 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
     # Shiny's server
     server <- function(env) {
         shinyURL::shinyURL.server(env$session)
-        # Processes the input from rw into the correct length and returns a list of 4 data frames
+        # Processes the input from datfr into the correct length and returns a list of 4 data frames
         wproc <- reactive({
             
-            rw2 <- list()
+            datfr2 <- list()
             
-            colvec <- -which(names(rw$Tail) %in% env$input[[p("choosecol")]])
+            colvec <- -which(names(datfr$Tail) %in% env$input[[p("choosecol")]])
             
-            rw$Tail[rw$Tail_count < env$input[[p("nmin")]]] = NA
+            datfr$Tail[datfr$Tail_count < env$input[[p("nmin")]]] = NA
             
-            rw2$Tail <- rw$Tail[,-colvec]
-            rw2$Count <- rw$Count[,-colvec]
+            datfr2$Tail <- datfr$Tail[,-colvec]
+            datfr2$Count <- datfr$Count[,-colvec]
             
-            hldvec2 <- apply(rw2$Tail,1,function(row) {
+            hldvec2 <- apply(datfr2$Tail,1,function(row) {
                 any(sum(!is.na(row))>= 2)
             })
             
-            rw2$Tail <- rw2$Tail[hldvec2,]
-            rw2$Count <- rw2$Count[hldvec2,]
+            datfr2$Tail <- datfr2$Tail[hldvec2,]
+            datfr2$Count <- datfr2$Count[hldvec2,]
             
             if(env$input[[p("clusterby")]] == 4){
-                rw$Tail <- rw$Tail[env$input[[p("choosecol")]]]
-                rw2$Count <- rw$Count[env$input[[p("choosecol")]]]
+                datfr$Tail <- datfr$Tail[env$input[[p("choosecol")]]]
+                datfr2$Count <- datfr$Count[env$input[[p("choosecol")]]]
             }
             
             #Append names for neatness in graphic
-            colnames(rw2$Tail) <- paste(colnames(rw2$Tail), "Tail")
-            colnames(rw2$Count) <- paste(colnames(rw2$Count), "Count")
-            rw3 <- list()
+            colnames(datfr2$Tail) <- paste(colnames(datfr2$Tail), "Tail")
+            colnames(datfr2$Count) <- paste(colnames(datfr2$Count), "Count")
+            datfr3 <- list()
             
-            rw3$Tail <- rw2$Tail
-            rw3$Count <- varistran::vst(rw2$Count)
+            hldvec3 <- apply(datfr2$Count,1,function(row) {
+                any(row >= (env$input[[p("expmin")]]))
+            })
+            datfr2$Tail <- datfr2$Tail[hldvec3,]
+            datfr2$Count <- datfr2$Count[hldvec3,]
+            datfr3$Tail <- datfr2$Tail
+            datfr3$Count <- varistran::vst(datfr2$Count)
             
-            rw3$annotate<- rw$Annotation[rownames(rw$Annotation) %in% rownames(rw3$Tail),]
+            datfr3$annotate<- datfr$Annotation[rownames(datfr$Annotation) %in% rownames(datfr3$Tail),]
             
-            rw3$Tail_count <- rw$Tail_count[rownames(rw$Tail_count) %in% rownames(rw3$Tail),]
+            datfr3$Tail_count <- datfr$Tail_count[rownames(datfr$Tail_count) %in% rownames(datfr3$Tail),]
             
-            orderedvec <- order(rw3$annotate$chromosome, rw3$annotate$start)
+            orderedvec <- order(datfr3$annotate$chromosome, datfr3$annotate$start)
             
-            rw3$annotate <- rw3$annotate[orderedvec,]
-            rw3$Tail <- rw3$Tail[orderedvec,]
-            rw3$Count <- rw3$Count[orderedvec,]
-            rw3$Tail_count <- rw3$Tail_count[orderedvec,]
-            rw3$Tail_count <- rw3$Tail_count[,-colvec]
+            datfr3$annotate <- datfr3$annotate[orderedvec,]
+            datfr3$Tail <- datfr3$Tail[orderedvec,]
+            datfr3$Count <- datfr3$Count[orderedvec,]
+            datfr3$Tail_count <- datfr3$Tail_count[orderedvec,]
+            datfr3$Tail_count <- datfr3$Tail_count[,-colvec]
             
             #Sort into order
-            cvec <- rw3$annotate$chromosome
+            cvec <- datfr3$annotate$chromosome
             cvec <- cvec %in% env$input[[p("choosechr")]]
             
-            rw3$annotate <- rw3$annotate[cvec,]
-            rw3$Tail <- rw3$Tail[cvec,]
-            rw3$Tail_count <- rw3$Tail_count[cvec,]
-            rw3$Count <- rw3$Count[cvec,]
+            datfr3$annotate <- datfr3$annotate[cvec,]
+            datfr3$Tail <- datfr3$Tail[cvec,]
+            datfr3$Tail_count <- datfr3$Tail_count[cvec,]
+            datfr3$Count <- datfr3$Count[cvec,]
             
             #Truncate names for neatness
-            rownames(rw3$Count) <- substr(rownames(rw3$Count), 1, 17)
-            rownames(rw3$Tail) <- substr(rownames(rw3$Tail), 1, 17)
-            rownames(rw3$Tail_count) <- substr(rownames(rw3$Tail_count), 1, 17)
-            rownames(rw3$annotate) <- substr(rownames(rw3$annotate), 1, 17)
-            rw3$annotate$product <- substr(rw3$annotate$product , 1, 76)
-            rw3$annotate$gene <- substr(rw3$annotate$gene, 1, 11)
+            rownames(datfr3$Count) <- substr(rownames(datfr3$Count), 1, 17)
+            rownames(datfr3$Tail) <- substr(rownames(datfr3$Tail), 1, 17)
+            rownames(datfr3$Tail_count) <- substr(rownames(datfr3$Tail_count), 1, 17)
+            rownames(datfr3$annotate) <- substr(rownames(datfr3$annotate), 1, 17)
+            datfr3$annotate$product <- substr(datfr3$annotate$product , 1, 76)
+            datfr3$annotate$gene <- substr(datfr3$annotate$gene, 1, 11)
             
             #Trim out values if we want to
-            hldvec2 <- apply(rw3$Count,1,function(row) {
-                any(row >= log2(env$input[[p("expmin")]]))
-            })
+#             hldvec2 <- apply(datfr$Count,1,function(row) {
+#                 any(row >= (env$input[[p("expmin")]]))
+#             })
             
-            rw3$annotate <-data.frame(rw3$annotate[hldvec2,])
-            rw3$Tail_count <- data.frame(rw3$Tail_count[hldvec2,])
-            rw3$Tail <- data.frame(rw3$Tail[hldvec2,])
-            rw3$Count <- data.frame(rw3$Count[hldvec2,])
+#             datfr3$annotate <-data.frame(datfr3$annotate[hldvec2,])
+#             datfr3$Tail_count <- data.frame(datfr3$Tail_count[hldvec2,])
+#             datfr3$Tail <- data.frame(datfr3$Tail[hldvec2,])
+#             datfr3$Count <- data.frame(datfr3$Count[hldvec2,])
             
-            return(rw3)
+            return(datfr3)
         })
         
         # Processes the selection of rows by calculating maximum span in either tail length of expression
@@ -210,11 +215,11 @@ sh_hmap_detailed <- function(rw, sample_labels=NULL, sample_labels2=NULL, featur
         })
         # RenderUI output for shiny, dynamically generate two selctize elements ---
         env$output[[p("chrs")]] <- shiny::renderUI({
-            tmpvec <- levels(rw$Annotation$chromosome)
+            tmpvec <- levels(datfr$Annotation$chromosome)
             selectizeInput("choosechr", "Choose chromosomes to display",multiple=T,tmpvec, selected=tmpvec)
         })
         env$output[[p("selCol")]] <- shiny::renderUI({
-            colvec <- names(rw$Tail)
+            colvec <- names(datfr$Tail)
             selectizeInput("choosecol", "Choose samples to display",multiple=T,colvec, selected=colvec)
         })
         #---
