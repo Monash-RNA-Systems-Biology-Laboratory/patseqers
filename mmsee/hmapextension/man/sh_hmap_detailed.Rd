@@ -4,11 +4,11 @@
 \alias{sh_hmap_detailed}
 \title{Produces detailed heatmap}
 \usage{
-sh_hmap_detailed(rw, sample_labels = NULL, sample_labels2 = NULL,
+sh_hmap_detailed(datfr, sample_labels = NULL, sample_labels2 = NULL,
   feature_labels = NULL, prefix = "", gotable = NULL, species = NULL)
 }
 \arguments{
-\item{rw}{List of dataframes 
+\item{datfr}{List of dataframes 
 Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):
 Counts - Genewise counts of expression
 Tail - Mean tail length

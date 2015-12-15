@@ -48,7 +48,13 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
         selin = function(env){
             env$seldat()$ann
         },
-        spp=species
+        spp=species,
+        hgc = function(env){
+            env$hgc()
+        },
+        otype = function(env){
+            env$otype()
+        }
     )
     # Shiny's UI layout 
     ui <- shiny::tags$div(
@@ -88,6 +94,13 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
                             )),
             shiny::tabPanel("Plot",plot$component_ui),
             shiny::tabPanel("GO analysis of selection",
+                            shiny::fluidRow(
+                                shiny::column(3, shiny::numericInput(p("fdrcutoff"), "Hyper geometric test cutoff", 0.05, min=0.0001, max=1, step=0.01)),
+                                shiny::column(3, shiny::radioButtons(p("ontype"), label="Ontology search type",
+                                                                     choices=list("Biological Processes"=1, "Cellular Component"=2,"Molecular Function"=3),
+                                                                     selected=1,
+                                                                     inline=TRUE))
+                            ),
                             shiny::tableOutput("tabout"))
         ),
         parenthetically("This plot is produced by a modified varistran::plot_heatmap.")
@@ -206,9 +219,17 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
         goDBret <- reactive({
             return(env$output[[p("GOsrch")]])
         })
+        hgcret <- reactive({
+            return(env$input[[p("fdrcutoff")]])
+        })
+        otype <- reactive({
+            return(env$input[[p("ontype")]])
+        })
         # Enables env to hold the data from sh_hmap_detailed
         env$seldat <- selproc
         env$goDB <- goDBret
+        env$hgc <- hgcret
+        env$otype <- otype
         
         env$output[[p("debugOut")]] <- shiny::renderText({
             names(env)

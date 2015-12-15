@@ -24,9 +24,11 @@
 #' @import GOstats
 #' @export
 
-shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", selin, rorder,spp) {
+shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", selin, rorder,spp, hgc=0.05, otype=1) {
     selin <- ensure_reactable(selin)
     rorder <- ensure_reactable(rorder)
+    hgc <- ensure_reactable(hgc)
+    otype <- ensure_reactable(otype)
     #gosrch <- ensure_reactable(gosrch)
     
     p <- function(name) paste0(prefix,name)
@@ -101,16 +103,25 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
             #Remove rows where ETREZID is NA
             unisel <- unisel[-which(is.na(unisel$ENTREZID)),]
             intsel <- intsel[-which(is.na(intsel$ENTREZID)),]
-
+            
+            if(otype(env) == 1){
+                ot = "BP"
+            } else if (otype(env)==2){
+                ot = "CC"
+            } else {
+                ot = "MF"
+            }
+            
             #Setup hyperG or fischer's exact test params
-            pcutoff = 0.05
-            hgparam <- new("GOHyperGParams",annotation=annlabel,geneIds=intsel,universeGeneIds=unisel,ontology="BP",pvalueCutoff=pcutoff,testDirection="over")
+            gc <- hgc(env)
+            hgparam <- new("GOHyperGParams",annotation=annlabel,geneIds=intsel,universeGeneIds=unisel,ontology=ot, testDirection="over",pvalueCutoff=gc)
             hg <- hyperGTest(hgparam)
             hg.pv <- pvalues(hg)
             hgadjpv <- p.adjust(hg.pv,'fdr')
-            sigGOID <- names(hgadjpv[hgadjpv < pcutoff])
+            sigGOID <- names(hgadjpv[hgadjpv < gc])
             df <- summary(hg)
-            xtable(df)
+            xtab <- xtable(df,digits=10)
+            return(xtab)
         })
         
         env$gotab <- gosrch
