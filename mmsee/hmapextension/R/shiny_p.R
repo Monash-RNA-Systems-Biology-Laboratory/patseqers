@@ -37,9 +37,11 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
         shiny::fluidRow(
             shiny::column(3, shiny::numericInput(p("width"), "Plot width", width, min=100, max=10000, step=50)),
             shiny::column(3, shiny::numericInput(p("height"), "Plot height", height, min=100, max=10000, step=50)),
-            shiny::column(4, shiny::tags$label("Download"), shiny::tags$br(),
+            shiny::column(4, shiny::tags$label("Download Plot"), shiny::tags$br(),
                           shiny::downloadButton(p("pdf"), "PDF"),
-                          shiny::downloadButton(p("eps"), "EPS"))
+                          shiny::downloadButton(p("eps"), "EPS")),
+            shiny::column(3, shiny::tags$label("Download Selection as .csv"), shiny::tags$br(),
+                          shiny::downloadButton(p("dlsel"), ".csv"))
         ),
         shiny::uiOutput(p("plotui"), width="auto", height="auto"),
         DT::dataTableOutput(p('datab'))
@@ -182,6 +184,12 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
                            paper="special", onefile=FALSE, horizontal=FALSE)
                 callback(env)
                 dev.off()
+            }
+        )
+        output[[p("dlsel")]] <- shiny::downloadHandler(
+            paste0("Selection.csv"),
+            function(filename) {
+                write.csv(calcdt(), filename)
             }
         )
         

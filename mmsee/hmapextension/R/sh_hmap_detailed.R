@@ -100,7 +100,9 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
                                 shiny::column(3, shiny::radioButtons(p("ontype"), label="Ontology search type",
                                                                      choices=list("Biological Processes"=1, "Cellular Component"=2,"Molecular Function"=3),
                                                                      selected=1,
-                                                                     inline=TRUE))
+                                                                     inline=TRUE)),
+                                shiny::column(3, shiny::tags$label("Download analysis as .csv"), shiny::tags$br(),
+                                              shiny::downloadButton(p("dlanalysis"), ".csv"))
                             ),
                             DT::dataTableOutput(p("gotab")))
                             #shiny::tableOutput("tabout"))
@@ -177,16 +179,6 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
             rownames(datfr3$annotate) <- substr(rownames(datfr3$annotate), 1, 17)
             datfr3$annotate$product <- substr(datfr3$annotate$product , 1, 76)
             datfr3$annotate$gene <- substr(datfr3$annotate$gene, 1, 11)
-            
-            #Trim out values if we want to
-#             hldvec2 <- apply(datfr$Count,1,function(row) {
-#                 any(row >= (env$input[[p("expmin")]]))
-#             })
-            
-#             datfr3$annotate <-data.frame(datfr3$annotate[hldvec2,])
-#             datfr3$Tail_count <- data.frame(datfr3$Tail_count[hldvec2,])
-#             datfr3$Tail <- data.frame(datfr3$Tail[hldvec2,])
-#             datfr3$Count <- data.frame(datfr3$Count[hldvec2,])
             
             return(datfr3)
         })
@@ -266,12 +258,15 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
         })
         plot$component_server(env)
         
-#         env$output[[p("tabout")]] <- shiny::renderTable({
-#             env$gotab()
-#         })
         env$output[[p("gotab")]] <- DT::renderDataTable(env$gotab(), 
                                     server=F,
                                     options = list(searchHighlight = TRUE)
+        )
+        env$output[[p("dlanalysis")]] <- shiny::downloadHandler(
+            paste0("Analysis.csv"),
+            function(filename) {
+                write.csv(env$gotab(), filename)
+            }
         )
     }
     composable_shiny_app(ui, server)
