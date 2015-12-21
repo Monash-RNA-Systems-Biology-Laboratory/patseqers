@@ -10,9 +10,9 @@ sh_hmap_detailed(datfr, sample_labels = NULL, sample_labels2 = NULL,
 \arguments{
 \item{datfr}{List of dataframes 
 Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):
-Counts - Genewise counts of expression
-Tail - Mean tail length
-Tail_counts - Number of poly-A tails counted
+Counts - Genewise counts of expression.
+Tail - Mean tail length 
+Tail_counts - Number of poly-A tails counted.
 Annotation - Information regarding the annotation information
      Gene name, chromosome, gene product, biotype etc...}
 

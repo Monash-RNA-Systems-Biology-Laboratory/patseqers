@@ -4,9 +4,9 @@
 #'      
 #' @param datfr List of dataframes 
 #' Takes a read.grouped.table() as input or a list of four dataframes (more data frames are ok but it only uses these):
-#' Counts - Genewise counts of expression
-#' Tail - Mean tail length
-#' Tail_counts - Number of poly-A tails counted
+#' Counts - Genewise counts of expression.
+#' Tail - Mean tail length 
+#' Tail_counts - Number of poly-A tails counted.
 #' Annotation - Information regarding the annotation information
 #'      Gene name, chromosome, gene product, biotype etc...
 #'  
@@ -25,8 +25,23 @@
 #' @export
 
 sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, feature_labels=NULL, prefix="", gotable=NULL, species=NULL) {
+    if(!("Annotation" %in% names(datfr)) || !("Count" %in% names(datfr)) || !("Tail_count" %in% names(datfr)) || !("Tail" %in% names(datfr))){
+        cat("This a summary of your dataframe: \n")
+        print(summary(datfr))
+        stop("List is missing one or more of: Tail, Count, Tail_count, Annotation")
+    }
+    dmrow <- c(nrow(datfr$Count), nrow(datfr$Tail_count), nrow(datfr$Tail), nrow(datfr$Annotation))
+    if(length(levels(as.factor(dmrow))) != 1){
+        cat("Dimensions of your data: \n")
+        for(i in 1:length(datfr)){
+            cat(dim(datfr[[i]]),"\t", (names(datfr))[i],"\n")
+        }
+        stop("Number of rows in Tail, Count, Tail_count, Annotation not equal")
+    }
+    
     if(is.null(species) || sum(species == c("Hs", "Sc", "Ce", "Mm"))!=1)
         stop("Species argument missing or incorrect")
+    
     
     p <- function(name) paste0(prefix,name)
     sample_labels <- ensure_reactable(sample_labels)
