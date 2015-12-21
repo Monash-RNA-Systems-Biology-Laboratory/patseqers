@@ -24,7 +24,8 @@ Annotation - Information regarding the annotation information
 
 \item{prefix}{Prefix for plot}
 
-\item{species}{Species of the data. Currently supports Human (Hs), Saccharomyces cerevisiae (Sc), Caenorhabditis elegans (Ce), Mus musculus (Mm)}
+\item{species}{Species of the data. Currently supports Human (Hs), Saccharomyces cerevisiae (Sc), Caenorhabditis elegans (Ce), Mus musculus (Mm)
+Now optional. Not entering this disables GO term analysis}
 }
 \value{
 Returns a composable shiny app object

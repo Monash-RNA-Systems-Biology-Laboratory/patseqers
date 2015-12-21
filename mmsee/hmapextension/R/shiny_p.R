@@ -12,6 +12,7 @@
 #' @param selin Selection of genes from sh_hmap_detailed
 #' @param rorder Row order from sh_hmap_detailed
 #' @param spp Species of the data (Hs, Sc, Ce, Mm)
+#' @param goenabl Whether GO Term analysis is enabled. TRUE by default. This might need changing in future
 #' 
 #' @import gridBase
 #' @import shinyURL
@@ -23,7 +24,7 @@
 #' @import GOstats
 #' @export
 
-shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", selin, rorder,spp, hgc=0.05, otype=1) {
+shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", selin, rorder,spp, hgc=0.05, otype=1, goenabl=TRUE) {
     selin <- ensure_reactable(selin)
     rorder <- ensure_reactable(rorder)
     hgc <- ensure_reactable(hgc)
@@ -126,9 +127,11 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
             df$Pvalue <- format(df$Pvalue, scientific=T)
             return(df)
         })
-        
-        env$gotab <- gosrch
-
+        if(goenabl){
+            env$gotab <- gosrch
+        } else {
+            env$gotab <- data.frame()
+        }
         
         # Works out if any rows are selected and returns selected rows
         # Calculates rows based on y-coordinates from brush output

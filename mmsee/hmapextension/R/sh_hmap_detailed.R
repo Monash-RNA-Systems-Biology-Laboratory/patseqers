@@ -15,6 +15,7 @@
 #' @param feature_labels Feature labels
 #' @param prefix Prefix for plot
 #' @param species Species of the data. Currently supports Human (Hs), Saccharomyces cerevisiae (Sc), Caenorhabditis elegans (Ce), Mus musculus (Mm)
+#' Now optional. Not entering this disables GO term analysis
 #' 
 #' @return 
 #' Returns a composable shiny app object
@@ -39,9 +40,12 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
         stop("Number of rows in Tail, Count, Tail_count, Annotation not equal")
     }
     
-    if(is.null(species) || sum(species == c("Hs", "Sc", "Ce", "Mm"))!=1)
-        stop("Species argument missing or incorrect")
-    
+    if(is.null(species) || sum(species == c("Hs", "Sc", "Ce", "Mm"))!=1){
+        GOenable <- FALSE
+        cat("Species is missing or incorrect. Not enabling GO Term Analysis\n")
+    } else {
+        GOenable <- TRUE
+    }
     
     p <- function(name) paste0(prefix,name)
     sample_labels <- ensure_reactable(sample_labels)
@@ -60,6 +64,7 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
         height=900,
         dlname="heatmap",
         prefix=p("plot_"),
+        goenabl=GOenable,
         selin = function(env){
             env$seldat()$ann
         },
@@ -119,6 +124,7 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
                                 shiny::column(3, shiny::tags$label("Download analysis as .csv"), shiny::tags$br(),
                                               shiny::downloadButton(p("dlanalysis"), ".csv"))
                             ),
+                            shiny::textOutput(p("goerror")),
                             DT::dataTableOutput(p("gotab")))
                             #shiny::tableOutput("tabout"))
         ),
@@ -272,11 +278,17 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
             )
         })
         plot$component_server(env)
+        if(GOenable == TRUE){
+            env$output[[p("gotab")]] <- DT::renderDataTable(env$gotab(), 
+                                        server=F,
+                                        options = list(searchHighlight = TRUE)
+            )
+        } else {
+            env$output[[p("goerror")]] <- shiny::renderText({
+                paste("GO Term analysis disabled")
+            })
+        }
         
-        env$output[[p("gotab")]] <- DT::renderDataTable(env$gotab(), 
-                                    server=F,
-                                    options = list(searchHighlight = TRUE)
-        )
         env$output[[p("dlanalysis")]] <- shiny::downloadHandler(
             paste0("Analysis.csv"),
             function(filename) {

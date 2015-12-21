@@ -5,7 +5,8 @@
 \title{Integrates heatmap into shiny}
 \usage{
 shiny_p(callback, width = 500, height = 500, dlname = "plot",
-  prefix = "", selin, rorder, spp, hgc = 0.05, otype = 1)
+  prefix = "", selin, rorder, spp, hgc = 0.05, otype = 1,
+  goenabl = TRUE)
 }
 \arguments{
 \item{callback}{Heatmap Grob from pl_hmap_detailed}
@@ -23,6 +24,8 @@ shiny_p(callback, width = 500, height = 500, dlname = "plot",
 \item{rorder}{Row order from sh_hmap_detailed}
 
 \item{spp}{Species of the data (Hs, Sc, Ce, Mm)}
+
+\item{goenabl}{Whether GO Term analysis is enabled. TRUE by default. This might need changing in future}
 }
 \details{
 Shiny wrapper for sh_hmap_detailed
