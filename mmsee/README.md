@@ -4,10 +4,10 @@
 Listed here are R  apps written in Shiny for use in RNASystems Biology (Beilharz Lab).
 These apps aim to visualise data and aid biologists in the understanding and interpretation of results coming out of the wet-lab. 
 
-Hmaps - 
+__Hmaps-__
 A tool for producing dynamically generated heatmaps for visualisation of gene expression.
 
-NormVis-
+__NormVis-__
 A tool for visualising and observing the effect of normalisation on gene expression of single genes.
 
 Both tools use the same method of adding datasets, and NormVis requires an extra confg.csv file to make it read the data correctly.
@@ -17,7 +17,7 @@ https://github.com/Victorian-Bioinformatics-Consortium/tail-tools
 The Hmaps app borrows heavily from the Nesoni library for producing it's heatmaps. More information about Nesoni can be found on: <br>
 https://github.com/Victorian-Bioinformatics-Consortium/nesoni
 
-Hmapextension- 
+__Hmapextension- __
 Hmapextension is an extension of the varistran library developed at:<br>
 https://github.com/MonashBioinformaticsPlatform/varistran <br>
 It produces more detailed heatmap output with more user input taken from the shiny app. 
