@@ -1,7 +1,7 @@
 
 ## Shiny Apps for the RNASystems Biology Lab
 
-Listed here are R  apps written in Shiny for use in the Beilharz Lab (RNASystems Biology).
+Listed here are R  apps written in Shiny for use in RNASystems Biology (Beilharz Lab).
 These apps aim to visualise data and aid biologists in the understanding and interpretation of results coming out of the wet-lab. 
 
 Hmaps - 
