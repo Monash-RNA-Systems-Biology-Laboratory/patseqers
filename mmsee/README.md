@@ -17,7 +17,7 @@ https://github.com/Victorian-Bioinformatics-Consortium/tail-tools
 The Hmaps app borrows heavily from the Nesoni library for producing it's heatmaps. More information about Nesoni can be found on: <br>
 https://github.com/Victorian-Bioinformatics-Consortium/nesoni
 
-__Hmapextension- __
+__Hmapextension-__
 Hmapextension is an extension of the varistran library developed at:<br>
 https://github.com/MonashBioinformaticsPlatform/varistran <br>
 It produces more detailed heatmap output with more user input taken from the shiny app. 
