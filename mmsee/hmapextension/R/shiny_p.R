@@ -153,7 +153,14 @@ shiny_p <- function(callback, width=500, height=500, dlname="plot", prefix="", s
         # Data table output with selected rows
         output[[p("datab")]] <- DT::renderDataTable(calcdt(), 
                                                     server=F,
-                                                    options = list(searchHighlight = TRUE)
+                                                    extensions = 'TableTools',
+                                                    options = list(searchHighlight = TRUE,
+                                                                   dom = 'T<"clear">lfrtip',
+                                                                       tableTools = list(
+                                                                           sSwfPath = DT::copySWF(),
+                                                                           aButtons = list('print'))
+                                                                   )
+                                                    
         )
 
         # Produces plot output

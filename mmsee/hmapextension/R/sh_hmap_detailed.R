@@ -281,7 +281,13 @@ sh_hmap_detailed <- function(datfr, sample_labels=NULL, sample_labels2=NULL, fea
         if(GOenable == TRUE){
             env$output[[p("gotab")]] <- DT::renderDataTable(env$gotab(), 
                                         server=F,
-                                        options = list(searchHighlight = TRUE)
+                                        extensions = 'TableTools',
+                                        options = list(searchHighlight = TRUE,
+                                                       dom = 'T<"clear">lfrtip',
+                                                       tableTools = list(
+                                                           sSwfPath = DT::copySWF(),
+                                                           aButtons = list('print'))
+                                        )
             )
         } else {
             env$output[[p("goerror")]] <- shiny::renderText({
