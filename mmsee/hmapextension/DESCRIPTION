@@ -1,13 +1,13 @@
 Package: hmapextension
-Title: Produced an interactive heatmap resembling Tailtools output
+Title: Produce an interactive heatmap resembling Tailtools output
 Version: 0.1.2
 Date: 2015-12-02
 Author: Michael See,
         Paul Harrison
 Maintainer: Michael See <mmsee2@student.monash.edu>
-Description: Takes a grouped table as input, and produces a heatmap with some
+Description: Takes a grouped table as input, and produces a heatmap with brush
     interactivity. Interactivity is from the shiny library.
-    Produced for RNASystems Biology
+    Produced for RNASystems Biology (Beilharz Lab)
 License: LGPL-2.1
 Depends:
     shiny,
