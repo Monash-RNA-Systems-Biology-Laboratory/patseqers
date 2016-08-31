@@ -152,7 +152,7 @@ shinyServer(function(input, output) {
         peak2 <- pro.df[, grep("peak2", colnames(pro.df))]
         final <- rownames(pro.df)
         for(i in 1:ncol(peak1)){
-            final <- data.frame(final, peak1[,1] - peak2[,i])
+            final <- data.frame(final, peak1[,i] - peak2[,i])
         }
         colnames(final) <- c("gene", colnames(count.df()))
         
@@ -163,7 +163,7 @@ shinyServer(function(input, output) {
         
         rownames(final) <- names    
         final$gene <- NULL
-        return(pro.df)
+        return(final)
     })
     
     #Unnecessary reactive objects, can just use input$x.selection directly in the select.xaxis.rep(licates)
