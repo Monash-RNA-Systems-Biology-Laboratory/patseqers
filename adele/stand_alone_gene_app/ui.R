@@ -3,81 +3,85 @@ source("helper.R")
 
 
 shinyUI(fluidPage(
-    
-    # Application title
-    titlePanel("Genewise Plotter"),
-    sidebarPanel(
-        uiOutput("x.sel.ui"),
-        selectInput("datatypex", label = "Type of data to be plotted on x-axis", choices =
-                        list("Gene expression (RPM)" = "gene expression", 
-                             "Tail length" = "tail length", "Peak pair shift" = "peak pair shift"), 
-                    selected = "Gene expression"),
-        uiOutput("y.sel.ui"),
-        selectInput("datatypey", label = "Type of data to be plotted on y-axis", choices =
-                        list("Gene expression (RPM)" = "gene expression", 
-                             "Tail length" = "tail length", "Peak pair shift" = "peak pair shift"), 
-                    selected = "Gene expression"),
-        numericInput("numfilter", label = "Minimum count filter", value = 25, min = 0),
-        radioButtons("type_filter", "Choose whether to filter by just one selection or all selections for
+  
+  # Application title
+  titlePanel("Genewise Plotter"),
+  sidebarPanel(
+    selectInput("x.selection", label = h4("Select samples for the x-axis"),
+                choices = column_names,
+                selected =  column_names[1], multiple = TRUE),
+    selectInput("datatypex", label = "Type of data to be plotted on x-axis", choices =
+                  list("Gene expression (RPM)" = "gene expression", 
+                       "Tail length" = "tail length", "Peak pair shift" = "peak pair shift"), 
+                selected = "Gene expression"),
+    selectInput("y.selection", label = h4("Select samples for the y-axis"),
+                choices = column_names,
+                selected =  column_names[2], multiple = TRUE),
+    selectInput("datatypey", label = "Type of data to be plotted on y-axis", choices =
+                  list("Gene expression (RPM)" = "gene expression", 
+                       "Tail length" = "tail length", "Peak pair shift" = "peak pair shift"), 
+                selected = "Gene expression"),
+    numericInput("numfilter", label = "Minimum count filter", value = 25, min = 0),
+    radioButtons("type_filter", "Choose whether to filter by just one selection or all selections for
                      the selected axis", 
-                     choices= list("One selection" = 1, "All selections" = 2), 
-                     selected = 1),
-        helpText("The filter will be applied to all three datatypes. It applies a filter that requires
+                 choices= list("One selection" = 1, "All selections" = 2), 
+                 selected = 1),
+    helpText("The filter will be applied to all three datatypes. It applies a filter that requires
                  at least one sample to meet the filter or all samples meets the set filter for a 
                  gene to be retained in the dataset."),
-        textInput("file_name", label = "Name of file to download", "file"),
-        downloadButton("deps", label = "Download eps file"),
-        downloadButton("dpdf", label = "Download pdf file"),
-        radioButtons("plot_axes", "Choose to standardise the axes range", choices= 
-                         list("Unstardardise (axes range might be unequal)" = 1, "Standardise (identical range) - not
+    textInput("file_name", label = "Name of file to download", "file"),
+    downloadButton("deps", label = "Download eps file"),
+    downloadButton("dpdf", label = "Download pdf file"),
+    radioButtons("plot_axes", "Choose to standardise the axes range", choices= 
+                   list("Unstardardise (axes range might be unequal)" = 1, "Standardise (identical range) - not
                               recommended for different data types" = 2), 
-                     selected = 1)
-        
-    ),
+                 selected = 1)
     
-    
-    mainPanel(
-        tabsetPanel(type = "tabs",
-                    tabPanel("Plot", 
-                             
-                             plotOutput("gplot", width = "550px", height = "550px", click = "plot_click"),
-                             textOutput("total.txt"),
-                             verbatimTextOutput("info_plot"),
-                             textOutput("sel.txt"),
-                             textOutput("key.txt"),
-                             textOutput("goterm.txt")
-                             
-                    ),
-                    tabPanel("Data Select",
-                             radioButtons("type_select", "Choose whether to search for genes of interest or 
+  ),
+  
+  
+  mainPanel(
+    tabsetPanel(type = "tabs",
+                tabPanel("Plot", 
+                         
+                         plotOutput("gplot", width = "550px", height = "550px", click = "plot_click"),
+                         textOutput("total.txt"),
+                         verbatimTextOutput("info_plot"),
+                         textOutput("sel.txt"),
+                         textOutput("key.txt"),
+                         textOutput("goterm.txt")
+                         
+                ),
+                tabPanel("Data Select",
+                         radioButtons("type_select", "Choose whether to search for genes of interest or 
                      paste a list of genes (purple)", choices= list("Paste genes" = 1, "Search genes" = 2), 
-                                          selected = 1),
-                             helpText("Note: Pasting a list of genes requires the genes to match exactly the 
+                                      selected = 1),
+                         helpText("Note: Pasting a list of genes requires the genes to match exactly the 
                                 names on the file. Seperate each gene by a space"),
-                             conditionalPanel(
-                                 condition = "input.type_select == 1",
-                                 textInput("gene.paste.sel", label = "Paste genes to highlight", value = "")
-                             ),
-                             conditionalPanel(
-                                 condition = "input.type_select == 2",
-                                 helpText("It may take the search input a while to load. Only 5 gene names will be displayed at a time but you can type into the 
+                         conditionalPanel(
+                           condition = "input.type_select == 1",
+                           textInput("gene.paste.sel", label = "Paste genes to highlight", value = "")
+                         ),
+                         conditionalPanel(
+                           condition = "input.type_select == 2",
+                           helpText("Only 5 gene names will be displayed at a time but you can type into the 
                                           box to find the gene you are interested it. If you can't find the gene you are looking for, it may not be in the dataset or the filter may need to be adjusted"),
-                                 uiOutput("gene.search.ui")
-                             ),
-                             textInput("goterm.select", label = "Search a GOTerm (blue)", value = ""),
-                             
-                             helpText("Only input one GO term. If the following error appears: 'Error 1: Extra content at the end of the document' on the Plot tab then the
+                           uiOutput("gene.search.ui")
+                         ),
+                         textInput("goterm.select", label = "Search a GOTerm (blue)", value = ""),
+                         
+                         helpText("Only input one GO term. If the following error appears: 'Error 1: Extra content at the end of the document' on the Plot tab then the
                                       Biomart servers are down and the GO Term search will not be useable")
-                    ),
-                    tabPanel("Selection table",
-                             helpText("Selected genes"),
-                             tableOutput("sel.table"),
-                             downloadButton("dsel", label = "Download selected genes table"),
-                             helpText("GO term genes"),
-                             tableOutput("goterm.table"),
-                             downloadButton("dgot", label = "Download table for GO term genes")
-                             )
-        )
+                ),
+                tabPanel("Selection table",
+                         helpText("Selected genes"),
+                         tableOutput("sel.table"),
+                         downloadButton("dsel", label = "Download selected genes table"),
+                         helpText("GO term genes"),
+                         tableOutput("goterm.table"),
+                         downloadButton("dgot", label = "Download table for GO term genes")
+                )
     )
+  )
 )
 )

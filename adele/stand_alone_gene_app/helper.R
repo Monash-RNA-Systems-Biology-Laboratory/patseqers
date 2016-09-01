@@ -1,5 +1,13 @@
 experiment_list <- as.list(list.dirs(full.names = F, recursive = F))
 
+column_names <- as.list(c("N2.rep1", "N2.rep2", "N2.rep3", "Gld2.rep1", "Gld2.rep2", 
+                  "Gld2.rep3", "Cpb3.rep1", "Cpb3.rep2", "Cpb3.rep3", "Gld2.pcb19.rep1", 
+                  "Gld2.pcb19.rep2", "Gld2.PARN1.rep1", "Gld2.PARN1.rep2", 
+                  "Gld2.CAF1.rep1", "Gld2.CAF1.rep2", "Gld2.PANL2.rep1", 
+                  "Gld2.PANL2.rep2", "Gld2.CCF1.rep1", "Gld2.CCF1.rep2", "Gld2.CCR4.rep1", 
+                  "Gld2.CCR4.rep2", "X1.2.cell.egg.rep1", "X1.2.cell.egg.rep2"))
+
+
 find_files <- function(file_path) {    
     count_df <- list.files(paste (file_path), pattern = 'genewise-count.csv', recursive = T)
     #columnNames <- read.csv(paste0(file_path, "/", count_df), header = F, row.names = 1, nrow = 1)
