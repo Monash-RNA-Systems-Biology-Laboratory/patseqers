@@ -7,15 +7,6 @@ shinyUI(fluidPage(
     # Application title
     titlePanel("Genewise Plotter"),
     sidebarPanel(
-#         uiOutput("experi_sel"),  
-        # selectInput("select.experiment", label = "Select experiment", 
-        #             choices = list.dirs(full.names=F, recursive =F), 
-        #             selected =  list.dirs(full.names=F, recursive =F)[1]),
-        # selectInput("org.type", label = "Type of organism", choices =
-        #                 list("Human" = "hsapiens_gene_ensembl", "Yeast" = "scerevisiae_gene_ensembl", 
-        #                      "Ce.elegans" = "celegans_gene_ensembl", "Mouse" = "mmusculus_gene_ensembl"), 
-        #             selected = "celegans_gene_ensembl"),
-        # helpText("The correct organism only needs to be selected for the GO Term search to work"),
         uiOutput("x.sel.ui"),
         selectInput("datatypex", label = "Type of data to be plotted on x-axis", choices =
                         list("Gene expression (RPM)" = "gene expression", 
@@ -73,10 +64,6 @@ shinyUI(fluidPage(
                                           box to find the gene you are interested it. If you can't find the gene you are looking for, it may not be in the dataset or the filter may need to be adjusted"),
                                  uiOutput("gene.search.ui")
                              ),
-                             
-                             textInput("key.select", label = "Search a key term (yellow)", value = ""),
-                             
-                             helpText("Only input one key term"),
                              textInput("goterm.select", label = "Search a GOTerm (blue)", value = ""),
                              
                              helpText("Only input one GO term. If the following error appears: 'Error 1: Extra content at the end of the document' on the Plot tab then the
@@ -86,9 +73,6 @@ shinyUI(fluidPage(
                              helpText("Selected genes"),
                              tableOutput("sel.table"),
                              downloadButton("dsel", label = "Download selected genes table"),
-                             helpText("Key term genes"),
-                             tableOutput("key.table"),
-                             downloadButton("dkey", label = "Download table for key term genes"),
                              helpText("GO term genes"),
                              tableOutput("goterm.table"),
                              downloadButton("dgot", label = "Download table for GO term genes")

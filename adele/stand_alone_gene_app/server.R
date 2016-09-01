@@ -10,11 +10,6 @@ peak_file_call <- find_peaks(selected_directory)
 
 shinyServer(function(input, output) {
   
-  #Create a reactive object containing the selected directory
-  # selected.directory <- reactive({
-  #     return(list.dirs(full.names=F, recursive =F))
-  # })  
-  
   #Select which organism database from ensembl biomart will use
   selected.mart <- reactive({
     mart <- "celegans_gene_ensembl"
@@ -28,16 +23,6 @@ shinyServer(function(input, output) {
     return(attr)
   })
   
-  #Use the find_files function to find the following files in the selected directory: "genewise-count.csv", 
-  #"genewise-tail.csv and "genewise-info.csv". These will be loaded in the format of a list containing
-  #three dataframes. The first item in the list is the counts dataframe. 2nd item is the tail dataframe
-  #and the third is the info dataframe.
-  # file.call <- reactive({
-  #     withProgress(message = "Finding files", value = 0, {
-  #         files <- find_files(selected.directory())
-  #         return(files)
-  #     })
-  # })
   
   #Create a reactive object containing column names 
   
@@ -319,22 +304,6 @@ shinyServer(function(input, output) {
     
   })
   
-  #Generate a dataframe containing genes matching a key word in the product description. The product 
-  #description is found in info.df 
-  key.genes <- reactive({
-    
-    if(!input$key.select == ""){
-      base.df <- base.df()
-      key.word <- input$key.select
-      info.df <- info.df()
-      
-      base.df$key_search <- info.df$product
-      base.df <- base.df[grep(key.word, base.df$key_search, ignore.case = TRUE), ]
-      return(base.df)
-    } 
-    
-    
-  })
   
   #Search by GoTerms. fetch_goterm is defined in helper.R and it runs a biomaRt query dependent on three 
   #arguements. 
@@ -354,14 +323,6 @@ shinyServer(function(input, output) {
         base.df <- base.df()
         base.df <- base.df[unique(grep(paste(query$genes, collapse = "|"), rownames(base.df),
                                        value = TRUE, ignore.case = TRUE)), ]
-        #          base.df <- base.df[unique(grep(paste(query$genes, collapse = "|"), rownames(base.df),
-        #                                                value = TRUE, ignore.case = TRUE)), ]
-        #          base.df <- base.df[grep(paste(query$genes, collapse = "|"), rownames(base.df),
-        #                                            value = TRUE, ignore.case = TRUE), ]
-        # print(head(query))
-        # print(str(query))
-        # print(length(query))
-        # print(nrow(query))
         return(base.df)
       } 
     }
@@ -402,15 +363,6 @@ shinyServer(function(input, output) {
                    } else{
                      geneplot
                    }
-                   # 
-                   #                          if(!input$key.select == "") {
-                   #                              key.genes.df <- key.genes()
-                   #                              geneplot <- geneplot + geom_point(data = key.genes.df, aes(x = x.mean, y=y.mean), 
-                   #                                                                colour = "#FFF000")
-                   #                          } else {
-                   #                              geneplot
-                   #                          }
-                   
                    
                    if(!input$goterm.select == ""){
                      goterm.df <- goterm.genes()
@@ -434,7 +386,7 @@ shinyServer(function(input, output) {
   output$total.txt <- renderText({
     total.genes <- nrow(base.df())
     
-    return(paste(total.genes, "total genes in the graph after filtering. Below, the top 5 closest genes to
+    return(paste(total.genes, "total genes in the graph after filtering. Below, the top 10 closest genes to
 the clicked mouse position, arranged in order of nearest distance to furthest. To find a gene more accurately, use the Data Select tab."))
   })
   
@@ -444,7 +396,7 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     rownames(df) <- NULL
     df <- df[,c(3, 1, 2)]
     nearPoints(df, input$plot_click, xvar = "x.mean", yvar = "y.mean", threshold = 10, 
-               maxpoints = 5)
+               maxpoints = 10)
   })
   
   #Reports on the number of genes highlighted by the gene search widgets
@@ -468,23 +420,7 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     
   })
   
-  #Reports the number of genes found matching the key word
-  output$key.txt <- renderText({
-    sel.key <- nrow(key.genes())
-    
-    if(!input$key.select == "") {
-      return(paste(sel.key, "genes match the key word searched for in the current dataset."))
-    }
-  })
-  
-  #Gives the output for the key word selected genes in a table.
-  output$key.table <- renderTable({
-    if(!input$key.select == "") {
-      
-      return(key.genes())
-    } 
-    #         return(head(initial.df()))
-  })
+
   
   #Reports the number of genes matching the GO Term
   output$goterm.txt <- renderText({
@@ -503,7 +439,7 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
       
       return(goterm.genes())
     } 
-    #         return(head(base.df()))
+    
   })
   
   output$deps <- downloadHandler(
@@ -530,13 +466,6 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
       write.csv(selected.genes(), file)
     })
   
-  output$dkey <- downloadHandler(
-    filename = function(){
-      paste0(input$file_name, "keyterm.csv")
-    },
-    content = function(file) {
-      write.csv(key.genes(), file)
-    })
   
   output$dgot <- downloadHandler(
     filename = function(){
