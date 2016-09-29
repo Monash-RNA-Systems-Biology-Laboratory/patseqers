@@ -4,9 +4,11 @@ library(ggplot2)
 library(nesoni)
 source("helper.R")
 
-selected_directory <- list.dirs(full.names=F, recursive =F)
+all_folders <- list.dirs(full.names=F, recursive =F)
+selected_directory <- all_folders[!grepl("www", all_folders)]
+
 file_call <- find_files(selected_directory)
-peak_file_call <- find_peaks(selected_directory)
+#peak_file_call <- find_peaks(selected_directory)
 
 shinyServer(function(input, output) {
   
@@ -22,18 +24,6 @@ shinyServer(function(input, output) {
     
     attr <- "refseq_mrna"
     return(attr)
-  })
-  
-  
-  #Create a reactive object containing column names 
-  
-  axis.names <- reactive({
-    
-    # files <- file.call()
-    files <- file_call
-    count.df <- files[[1]]
-    axis.names <- colnames(count.df)
-    return(as.list(axis.names))
   })
   
   
@@ -87,44 +77,6 @@ shinyServer(function(input, output) {
     return(tail.df)
   })
   
-  #Create a reactive object containing the peaks    
-  peak.df <- reactive({
-    tail.df <- peak_file_call$Tail_count
-    xsel <- input$x.selection
-    ysel <- input$y.selection
-    sel <- c(xsel, ysel)
-    
-    pro.df <- peak_file_call$Proportion
-    
-    pro.df <- pro.df[,grep(paste(sel, collapse = "|"), colnames(pro.df), ignore.case = T)]
-    if(input$type_filter == 1) {
-      pro.df <- pro.df[apply(tail.df, 1, function(row) {any(row >= input$numfilter)}), ]
-      
-    } else {
-      pro.df <- pro.df[apply(tail.df, 1, function(row) {all(row >= input$numfilter)}), ]
-    }        
-    peak1 <- pro.df[, grep("peak1", colnames(pro.df))]
-    peak2 <- pro.df[, grep("peak2", colnames(pro.df))]
-    final <- rownames(pro.df)
-    for(i in 1:ncol(peak1)){
-      final <- data.frame(final, peak1[,i] - peak2[,i])
-    }
-    colnames(final) <- c("gene", colnames(count.df()))
-    
-    names <- as.character(final$gene)
-    for(i in 1:length(names)){
-      names[i] <- unlist(strsplit(names[i], "-peak"))[[1]]
-    }
-    
-    rownames(final) <- names    
-    final$gene <- NULL
-    return(final)
-  })
-  
-  #Unnecessary reactive objects, can just use input$x.selection directly in the select.xaxis.rep(licates)
-  #However, may have used the xselect objects elsewhere, need to ensure this before deleting from code 
-  #completely
-  
   #Generate a dataframe containing the columns picked for X and y axis from either the counts or tail length 
   select.xaxis.rep <- reactive({
     xsel <- input$x.selection
@@ -132,14 +84,11 @@ shinyServer(function(input, output) {
     if(input$datatypex == "gene expression") {
       count.df <- count.df()
       x.df <- count.df[, xsel, drop = FALSE]
-      # x.df <- tmmnorm(x.df)
+      x.df <- tmmnorm(x.df)
     } else if(input$datatypex == "tail length") {
       tail.df <- tail.df()
       x.df <- tail.df[, xsel, drop = FALSE]
-    } else {
-      peak.df <- peak.df()
-      x.df <- peak.df[, xsel, drop = FALSE]
-    }
+    } 
     return(as.data.frame(x.df))
   })
   
@@ -150,15 +99,11 @@ shinyServer(function(input, output) {
     if(input$datatypey == "gene expression") {
       count.df <- count.df()
       y.df <- count.df[, ysel, drop = FALSE]
-      
-      #y.df <- tmmnorm(y.df)
+      y.df <- tmmnorm(y.df)
     } else if(input$datatypey == "tail length"){
       tail.df <- tail.df()          
       y.df <- tail.df[, ysel, drop = FALSE]
-    } else {
-      peak.df <- peak.df()
-      y.df <- peak.df[, ysel, drop = FALSE]
-    }
+    } 
     return(as.data.frame(y.df))
   })
   
@@ -248,9 +193,11 @@ shinyServer(function(input, output) {
   output$gene.search.ui <- renderUI({
     withProgress(message = "Finding genes...", value = 0, { 
       selectizeInput("gene.search.sel", label = "Input genes to highlight", choices = gene.names(), 
-                     selected = NULL, multiple = TRUE, options = list(maxOptions = 5))
+                     selected = NULL, multiple = TRUE, options = list(maxOptions = 10))
     })
   })
+  
+  
   
   #Create a dataframe filtered by the selected genes. This will take input from both the text input
   #and the selectiveInput widget
@@ -277,17 +224,18 @@ shinyServer(function(input, output) {
     
   })
   
-  
   #Search by GoTerms. fetch_goterm is defined in helper.R and it runs a biomaRt query dependent on three 
   #arguements. 
   
   goterm.genes <- reactive({
     
     goterm.word <- input$goterm.select
+    goslim.word <- input$goslim.select
     org <- selected.mart()
     attr <- go.attribute()
     
-    if(!goterm.word == ""){
+    
+    if(input$type_goterm == 1  & !goterm.word == "") {
       query <- fetch_goterm(attr, goterm.word, org)
       colnames(query) <- "genes"
       
@@ -298,8 +246,18 @@ shinyServer(function(input, output) {
                                        value = TRUE, ignore.case = TRUE)), ]
         return(base.df)
       } 
+    } else if (input$type_goterm == 2 & !goslim.word == "") {
+      query <- fetch_goterm(attr, goslim.word, org)
+      colnames(query) <- "genes"
+      
+      
+      if(nrow(query) != 0) {
+        base.df <- base.df()
+        base.df <- base.df[unique(grep(paste(query$genes, collapse = "|"), rownames(base.df),
+                                       value = TRUE, ignore.case = TRUE)), ]
+        return(base.df)
+      } 
     }
-    
   })
   
   ####Below here are outputs#########################
@@ -314,7 +272,9 @@ shinyServer(function(input, output) {
                      xlab(paste("x.mean", input$datatypex)) + #theme(aspect.ratio =1) +
                      ylab(paste("y.mean", input$datatypey)) #+  xlim(vmin, vmax) + ylim(vmin, vmax)
                    
-                   if(input$plot_axes == 2) {
+                   #               if(input$plot_axes == 2) {
+                   if(input$datatypex == input$datatypey) {
+                     
                      xmean.max <- max(df$x.mean)
                      ymean.max <- max(df$y.mean)
                      xmean.min <- min(df$x.mean)
@@ -328,22 +288,23 @@ shinyServer(function(input, output) {
                      geneplot
                    }
                    
+                   if(!input$goterm.select == "" | !input$goslim.select == ""){
+                     goterm.df <- goterm.genes()
+                     geneplot <- geneplot + geom_point(data = goterm.df, aes(x = x.mean, y = y.mean), shape = 21,
+                                                       colour = "#3366ff", fill = "#3399ff", size = 2.5)
+                   } else {
+                     geneplot
+                   }
                    
                    if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
                      sel.genes.df <- selected.genes()
-                     geneplot <- geneplot + geom_point(data = sel.genes.df, aes(x = x.mean, y=y.mean), colour = "#ff00ff",
-                                                       fill = "#b366ff", shape = 23)
+                     geneplot <- geneplot + geom_point(data = sel.genes.df, aes(x = x.mean, y=y.mean), colour = "#ff9900",
+                                                       fill = "#ffff00", shape = 23, size = 2.5)
                    } else{
                      geneplot
                    }
                    
-                   if(!input$goterm.select == ""){
-                     goterm.df <- goterm.genes()
-                     geneplot <- geneplot + geom_point(data = goterm.df, aes(x = x.mean, y = y.mean), 
-                                                       colour = "#3399ff")
-                   } else {
-                     geneplot
-                   }
+                   
                    
                    
                    geneplot
@@ -354,6 +315,11 @@ shinyServer(function(input, output) {
     
     main_plot()
   })
+  
+  # output$debug.goterm <- renderTable({
+  #   df <- selected.genes()
+  #   return(head(df))
+  # })
   
   #Reports on the number of genes in total being plotted
   output$total.txt <- renderText({
@@ -400,7 +366,7 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
   output$goterm.txt <- renderText({
     
     
-    if(!input$goterm.select == ""){
+    if(!input$goterm.select == "" | input$type_goterm == 2  & !input$goslim.select == ""){
       sel.goterm <- nrow(goterm.genes())
       return(paste(sel.goterm, "genes have been annotated with the selected GO term in the current 
                          dataset."))
@@ -409,7 +375,7 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
   
   #Gives the output for the GO Term selected genes in a table.
   output$goterm.table <- renderTable({
-    if(!input$goterm.select == ""){
+    if(!input$goterm.select == "" | input$type_goterm == 2 & !input$goslim.select == "" ){
       df <- goterm.genes()
       rownames(df) <- NULL
       return(df)
