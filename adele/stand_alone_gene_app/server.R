@@ -10,28 +10,29 @@ selected_directory <- all_folders[!grepl("www", all_folders)]
 file_call <- find_files(selected_directory)
 #peak_file_call <- find_peaks(selected_directory)
 
+selected.mart <- useMart("ENSEMBL_MART_ENSEMBL", dataset = "celegans_gene_ensembl", host = "www.ensembl.org")
+go.attribute <- "refseq_mrna"
+
 shinyServer(function(input, output) {
   
   
   #Select which organism database from ensembl biomart will use
-  selected.mart <- reactive({
-    mart <- "celegans_gene_ensembl"
-    mart <- useMart("ENSEMBL_MART_ENSEMBL", dataset = mart, host = "www.ensembl.org")
-    return(mart)
-  })
-  
-  go.attribute <- reactive({
-    
-    attr <- "refseq_mrna"
-    return(attr)
-  })
+  # selected.mart <- reactive({
+  #   mart <- "celegans_gene_ensembl"
+  #   mart <- useMart("ENSEMBL_MART_ENSEMBL", dataset = mart, host = "www.ensembl.org")
+  #   return(mart)
+  # })
+  # 
+  # go.attribute <- reactive({
+  #   
+  #   attr <- "refseq_mrna"
+  #   return(attr)
+  # })
   
   
   #Create a reactive object by pulling out the counts dataframe and filtering by the input$numfilter
   count.df <- reactive({
-    
-    files <- file_call
-    count.df <- files[[1]]
+    count.df <- file_call[[1]]
     
     xsel <- input$x.selection
     ysel <- input$y.selection
@@ -49,8 +50,7 @@ shinyServer(function(input, output) {
   #Create reactive objects by pulling out the tail length and tail counts dataframe
   
   tail.count.df <- reactive({
-    files <- file_call
-    tail.count.df <- files[[3]]
+    tail.count.df <- file_call[[3]]
     xsel <- input$x.selection
     ysel <- input$y.selection
     sel <- c(xsel, ysel)
@@ -60,8 +60,7 @@ shinyServer(function(input, output) {
   
   #Filter the tail length file by the tail.counts.df
   tail.df <- reactive({
-    files <- file_call
-    tail.df <- files[[2]]
+    tail.df <- file_call[[2]]
     tail.count <- tail.count.df()
     
     xsel <- input$x.selection
@@ -73,7 +72,6 @@ shinyServer(function(input, output) {
     } else if(input$type_filter == 2) {
       tail.df <- tail.df[apply(tail.count, 1, function(row) {all(row >= input$numfilter)}), ]
     }
-    
     return(tail.df)
   })
   
@@ -157,8 +155,8 @@ shinyServer(function(input, output) {
   info.df <- reactive({
     base.df <- initial.df()
     #files <- file.call()
-    files <- file_call
-    info.df <- files[[4]]
+    #files <- file_call
+    info.df <- file_call[[4]]
     
     info.df$significant <- rownames(info.df) %in% rownames(base.df)
     info.df <- subset(info.df, significant)
@@ -231,8 +229,8 @@ shinyServer(function(input, output) {
     
     goterm.word <- input$goterm.select
     goslim.word <- input$goslim.select
-    org <- selected.mart()
-    attr <- go.attribute()
+    org <- selected.mart#()
+    attr <- go.attribute#()
     
     
     if(input$type_goterm == 1  & !goterm.word == "") {
@@ -288,10 +286,13 @@ shinyServer(function(input, output) {
                      geneplot
                    }
                    
-                   if(!input$goterm.select == "" | !input$goslim.select == ""){
+                   
+                   if(!input$goterm.select == "" | input$type_goterm == 2  & !input$goslim.select == ""){ 
                      goterm.df <- goterm.genes()
-                     geneplot <- geneplot + geom_point(data = goterm.df, aes(x = x.mean, y = y.mean), shape = 21,
-                                                       colour = "#3366ff", fill = "#3399ff", size = 2.5)
+                     if(is.null(goterm.df) == FALSE){
+                       geneplot <- geneplot + geom_point(data = goterm.df, aes(x = x.mean, y = y.mean), shape = 21,
+                                                         colour = "#3366ff", fill = "#3399ff", size = 2.5)
+                     }
                    } else {
                      geneplot
                    }
@@ -316,17 +317,12 @@ shinyServer(function(input, output) {
     main_plot()
   })
   
-  # output$debug.goterm <- renderTable({
-  #   df <- selected.genes()
-  #   return(head(df))
-  # })
-  
   #Reports on the number of genes in total being plotted
   output$total.txt <- renderText({
     total.genes <- nrow(base.df())
     
     return(paste(total.genes, "total genes in the graph after filtering. Below, the top 10 closest genes to
-the clicked mouse position, arranged in order of nearest distance to furthest. To find a gene more accurately, use the Data Select tab."))
+the clicked mouse position, arranged in order of nearest distance to furthest. To find a gene more accurately, use the Search Genes tab."))
   })
   
   #Returns the closest rows to the mouse hover
@@ -355,9 +351,9 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
       df <- selected.genes()
       rownames(df) <- NULL
+      df$selected <- NULL
       return(df)
     } 
-    
   })
   
   
@@ -367,10 +363,21 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     
     
     if(!input$goterm.select == "" | input$type_goterm == 2  & !input$goslim.select == ""){
+      df <- goterm.genes()
+      rownames(df) <- NULL
       sel.goterm <- nrow(goterm.genes())
-      return(paste(sel.goterm, "genes have been annotated with the selected GO term in the current 
+      if(is.null(goterm.genes()) == FALSE){
+        return(paste(sel.goterm, "genes have been annotated with the selected GO term in the current 
                          dataset."))
-    } 
+      } else {
+        return(paste("0 genes have been annotated with the selected GO term in the current 
+                         dataset."))
+      }
+      
+    } else {
+      return(paste("0 genes have been annotated with the selected GO term in the current 
+                         dataset."))
+    }
   })
   
   #Gives the output for the GO Term selected genes in a table.
@@ -378,9 +385,11 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     if(!input$goterm.select == "" | input$type_goterm == 2 & !input$goslim.select == "" ){
       df <- goterm.genes()
       rownames(df) <- NULL
-      return(df)
-    } 
-    
+      
+     # if(is.null(df == FALSE)){
+        return(df)
+    #  }
+    }
   })
   
   output$deps <- downloadHandler(

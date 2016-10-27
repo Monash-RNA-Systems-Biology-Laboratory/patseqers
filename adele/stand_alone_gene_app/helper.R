@@ -1,12 +1,3 @@
-all_folders <- as.list(list.dirs(full.names = F, recursive = F))
-experiment_list <- all_folders[!grepl("www", all_folders)]
-
-# column_names <- as.list(c("N2.rep1", "N2.rep2", "N2.rep3", "Gld2.rep1", "Gld2.rep2", 
-#                   "Gld2.rep3", "Cpb3.rep1", "Cpb3.rep2", "Cpb3.rep3", "Gld2.pcb19.rep1", 
-#                   "Gld2.pcb19.rep2", "Gld2.PARN1.rep1", "Gld2.PARN1.rep2", 
-#                   "Gld2.CAF1.rep1", "Gld2.CAF1.rep2", "Gld2.PANL2.rep1", 
-#                   "Gld2.PANL2.rep2", "Gld2.CCF1.rep1", "Gld2.CCF1.rep2", "Gld2.CCR4.rep1", 
-#                   "Gld2.CCR4.rep2", "X1.2.cell.egg.rep1", "X1.2.cell.egg.rep2"))
 
 specific_samples <- as.list(c("N2.rep1", "N2.rep2", "N2.rep3", "Gld2.rep1", "Gld2.rep2", 
                           "Gld2.rep3", "Cpb3.rep1", "Cpb3.rep2", "Cpb3.rep3", "Gld2.pcb19.rep1", 
