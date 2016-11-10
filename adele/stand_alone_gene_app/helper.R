@@ -41,11 +41,20 @@ fetch_goterm <- function(attr, term, pick_mart) {
     return(get.GO)
 }
 
-# fetch_names <- function(pick_mart, term) {
-#     get.names <- getBM(attributes=c("refseq_mrna"), filters = "go_id",
-#                     values = term, mart= pick_mart)
-#     return(get.GO)
-# }
+saveData <- function(data) {
+  data <- as.data.frame(data)
+  if (exists("pre_load")) {
+    pre_load <<- rbind(pre_load, data)
+  } else {
+    pre_load <<- pre_load
+  }
+}
+
+loadData <- function() {
+  if (exists("pre_load")) {
+    pre_load
+  }
+}
 
 
 
