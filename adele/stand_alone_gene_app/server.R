@@ -1,41 +1,43 @@
 library(edgeR)
 library(biomaRt)
 library(ggplot2)
-library(nesoni)
+library(shinyBS)
+#library(nesoni)
+#library(dplyr)
+#library(tidyr)
 source("helper.R")
 
-file_call <- find_files("gld2combined")
+# Load the RDS object
+load("www/data/preload_files_called.rds")
 
-selected.mart <- useMart("ENSEMBL_MART_ENSEMBL", dataset = "celegans_gene_ensembl", host = "www.ensembl.org")
+#Load the mart object
+load("www/data/preload_mart.rds")
 
-load("www/data/pre_data.rds")
-load("www/data/preloaded_plot.rds")
-
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
   
   
   xselection <- reactive({
     
-    xsel <- switch(input$radio.x,
-                   N2 = c("N2.rep1", "N2.rep2", "N2.rep3"),
-                   Gld2 = c("Gld2.rep1", "Gld2.rep2", "Gld2.rep3"),
-                   Cpb3 = c("Cpb3.rep1", "Cpb3.rep2", "Cpb3.rep3"),
-                   Gld2_pcb19 = c("Gld2.pcb19.rep1", "Gld2.pcb19.rep2"),
-                   Gld2_CCF1 = c("Gld2.CCF1.rep1", "Gld2.CCF1.rep2"),
-                   X1.2.cell.egg = c("X1.2.cell.egg.rep1", "X1.2.cell.egg.rep2")
+    
+    
+    xsel <- switch(input$input_x,
+                   "N2" = c("N2.rep1", "N2.rep2", "N2.rep3"),
+                   "gld2" = c("Gld2.rep1", "Gld2.rep2", "Gld2.rep3"),
+                   "gld2_pcb19_RNAi" = c("Gld2.pcb19.rep1", "Gld2.pcb19.rep2"),
+                   "gld2_ccf1_RNAi" = c("Gld2.CCF1.rep1", "Gld2.CCF1.rep2"),
+                   "1.2_cell" = c("X1.2.cell.egg.rep1", "X1.2.cell.egg.rep2")
     )
     return(xsel)
   })
   
   yselection <- reactive({
     
-    ysel <- switch(input$radio.y,
-                   N2 = c("N2.rep1", "N2.rep2", "N2.rep3"),
-                   Gld2 = c("Gld2.rep1", "Gld2.rep2", "Gld2.rep3"),
-                   Cpb3 = c("Cpb3.rep1", "Cpb3.rep2", "Cpb3.rep3"),
-                   Gld2_pcb19 = c("Gld2.pcb19.rep1", "Gld2.pcb19.rep2"),
-                   Gld2_CCF1 = c("Gld2.CCF1.rep1", "Gld2.CCF1.rep2"),
-                   X1.2.cell.egg = c("X1.2.cell.egg.rep1", "X1.2.cell.egg.rep2")
+    ysel <- switch(input$input_y,
+                   "N2" = c("N2.rep1", "N2.rep2", "N2.rep3"),
+                   "gld2" = c("Gld2.rep1", "Gld2.rep2", "Gld2.rep3"),
+                   "gld2_pcb19_RNAi" = c("Gld2.pcb19.rep1", "Gld2.pcb19.rep2"),
+                   "gld2_ccf1_RNAi" = c("Gld2.CCF1.rep1", "Gld2.CCF1.rep2"),
+                   "1.2_cell" = c("X1.2.cell.egg.rep1", "X1.2.cell.egg.rep2")
     )
     return(ysel)
   })
@@ -47,13 +49,14 @@ shinyServer(function(input, output) {
     xsel <- xselection()
     ysel <- yselection()
     sel <- c(xsel, ysel)
+    
     count.df <- count.df[, sel, drop = FALSE]
     if(input$type_filter == 1) {
       count.df <- count.df[apply(count.df, 1, function(row) {any(row >= input$numfilter)}), ]
     } else if(input$type_filter == 2) {
       count.df <- count.df[apply(count.df, 1, function(row) {all(row >= input$numfilter)}), ]
     }
-    count.df <- varistran::vst(count.df, cpm = T)
+    #count.df <- varistran::vst(count.df, cpm = T)
     return(count.df)
   })
   
@@ -64,6 +67,7 @@ shinyServer(function(input, output) {
     xsel <- xselection()
     ysel <- yselection()   
     sel <- c(xsel, ysel)
+    
     tail.count.df <- tail.count.df[, sel, drop = FALSE]
     return(tail.count.df)
   })
@@ -77,6 +81,7 @@ shinyServer(function(input, output) {
     xsel <- xselection()
     ysel <- yselection()
     sel <- c(xsel, ysel)
+    
     tail.df <- tail.df[, sel, drop = FALSE]
     if(input$type_filter == 1) {
       tail.df <- tail.df[apply(tail.count, 1, function(row) {any(row >= input$numfilter)}), ]
@@ -165,8 +170,6 @@ shinyServer(function(input, output) {
   
   info.df <- reactive({
     base.df <- initial.df()
-    #files <- file.call()
-    #files <- file_call
     info.df <- file_call[[4]]
     
     info.df$significant <- rownames(info.df) %in% rownames(base.df)
@@ -175,17 +178,6 @@ shinyServer(function(input, output) {
     return(info.df)
   })
   
-  base.df <- reactive({
-    withProgress(message = "Building dataframe with selected inputs", 
-                 value = 0, {
-                   
-                   base.df <- initial.df()
-                   info.df <- info.df()
-                   base.df$gene <- info.df$gene
-                   #write.csv(base.df, "www/data/calculated_data.csv")
-                   return(base.df)
-                 })
-  })
   
   #From the info.df, both the locus names (rownames of info.df) and the common/sequence names
   #can be retrieved from the genes column in info.df (column 2 usually). This can be used to create
@@ -201,26 +193,40 @@ shinyServer(function(input, output) {
   })
   
   #Create a ui element for the list of genes currently present in the plot
-  output$gene.search.ui <- renderUI({
-    withProgress(message = "Finding genes...", value = 0, { 
-      selectizeInput("gene.search.sel", label = "Input genes to highlight", choices = gene.names(), 
-                     selected = NULL, multiple = TRUE, options = list(maxOptions = 10))
-    })
+  output$gene_search_ui <- renderUI({
+     
+      selectizeInput("gene_search_ui", label = "Input genes to highlight", choices = gene.names(), 
+                     selected = NULL, multiple = TRUE, options = list(maxOptions = 10), width = "80%")
   })
   
+  addTooltip(session, id = "gene_search_ui", title = 
+               "Help: Only 10 gene names will be displayed at a time but you can type into the box to find the gene you are interested it. If you can't find the gene you are looking for, it may not be in the dataset or the filter may need to be adjusted",
+             placement = "top", trigger = "hover")
+  
+  ### Create a base dataframe 
+  base.df <- reactive({
+    withProgress(message = "Building dataframe with selected inputs", 
+                 value = 0, style = "old", {
+                   
+                   base.df <- initial.df()
+                   info.df <- info.df()
+                   base.df$gene <- info.df$gene
+                   return(base.df)
+                 })
+  })
   
   
   #Create a dataframe filtered by the selected genes. This will take input from both the text input
   #and the selectiveInput widget
   selected.genes <- reactive({
     
-    if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
+    if(!is.null(input$gene_search_ui) | !is.null(input$gene_paste_sel)){
       base.df <- base.df()
       rownames(base.df) <- tolower(rownames(base.df))
       base.df$gene <- tolower(base.df$gene)
       
-      sel.genes <- tolower(input$gene.search.sel)
-      pas.genes <- tolower(input$gene.paste.sel)
+      sel.genes <- tolower(input$gene_search_ui)
+      pas.genes <- tolower(input$gene_paste_sel)
       
       sgenes <- as.data.frame(sel.genes)
       
@@ -241,13 +247,13 @@ shinyServer(function(input, output) {
   
   goterm.genes <- reactive({
     
-    goterm.word <- input$goterm.select
-    goslim.word <- input$goslim.select
-    org <- selected.mart#()
+    goterm.word <- input$goterm_select
+    goslim.word <- input$goslim_select
+    org <- selected.mart
     attr <- "refseq_mrna"
     
     
-    if(input$type_goterm == 1  & !goterm.word == "") {
+    if(input$type_goterm == 2  & !goterm.word == "") {
       query <- fetch_goterm(attr, goterm.word, org)
       colnames(query) <- "genes"
       
@@ -258,7 +264,7 @@ shinyServer(function(input, output) {
                                        value = TRUE, ignore.case = TRUE)), ]
         return(base.df)
       } 
-    } else if (input$type_goterm == 2 & !goslim.word == "") {
+    } else if (input$type_goterm == 1 & !goslim.word == "") {
       query <- fetch_goterm(attr, goslim.word, org)
       colnames(query) <- "genes"
       
@@ -273,38 +279,21 @@ shinyServer(function(input, output) {
   })
   
   
-  #### Create a dataframe for genes that have both been searched and annotated with the GOTerm of interest
-  # 
-  # go_selected.gene <- reactive({
-  #   sel_genes <- selected.genes()
-  #   go_genes <- goterm.genes()
-  #   
-  #   if(is.null(go_genes) == FALSE & !is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
-  #     # sel_genes$annotated <- sel_genes$gene %in% go_genes$gene
-  #     
-  #     rownames(go_genes) <- tolower(rownames(go_genes))
-  #     sel_genes$annotated <- rownames(sel_genes) %in% rownames(go_genes)
-  #     go_selected <- subset(sel_genes, annotated)
-  #     go_selected$selected <- NULL
-  #     go_selected$annotated <- NULL
-  #     return(go_selected)
-  #   }
-  #   
-  #   
-  # })
-  # 
+  
   
   ####Below here are outputs#########################
   
   #Renders the plot
   main_plot <- reactive({
     withProgress(message = "Generating graph...", 
-                 value = 0, {
+                 value = 0, style = "old", {
                    df <- base.df()
                    
-                   geneplot <- ggplot(df, aes(x= x.mean, y = y.mean)) + geom_point() + theme_bw() + 
-                     xlab(paste("x.mean", input$datatypex)) +
-                     ylab(paste("y.mean", input$datatypey)) + xlab(input$radio.x) + ylab(input$radio.y)
+                   geneplot <- ggplot(df, aes(x= x.mean, y = y.mean)) + geom_point() +
+                     xlab(paste(input$input_x, input$datatypex)) + ylab(paste(input$input_y, input$datatypey)) +
+                     theme_bw() + theme(aspect.ratio=1)
+                   # + 
+                   #theme(aspect.ratio=1)
                    #+  xlim(vmin, vmax) + ylim(vmin, vmax)
                    #theme(aspect.ratio =1) +
                    #               if(input$plot_axes == 2) {
@@ -324,84 +313,76 @@ shinyServer(function(input, output) {
                    }
                    
                    
-                   if(!input$goterm.select == "" | input$type_goterm == 2  & !input$goslim.select == ""){ 
+                   if(!input$goterm_select == "" | input$type_goterm == 1  & !input$goslim_select == ""){ 
                      goterm.df <- goterm.genes()
                      if(is.null(goterm.df) == FALSE){
-                       geneplot <- geneplot + geom_point(data = goterm.df, aes(x = x.mean, y = y.mean), shape = 21,
-                                                         colour = "#3366ff", fill = "#3399ff", size = 2.5)
+                       geneplot <- geneplot + geom_point(data = goterm.df, 
+                                                         aes(x = x.mean, y = y.mean, 
+                                                             fill = "GO Term Annotated genes"), 
+                                                         shape = 21, size = 2.5)
                      }
                    } else {
                      geneplot
                    }
                    
-                   if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
+                   if(!is.null(input$gene_search_ui) | !is.null(input$gene_paste_sel)){
                      sel.genes.df <- selected.genes()
-                     geneplot <- geneplot + geom_point(data = sel.genes.df, aes(x = x.mean, y=y.mean), colour = "#e6005c",
-                                                       fill = "#ffcc00", shape = 23, size = 2.5)
+                     if(nrow(sel.genes.df) >= 1)  {
+                       geneplot <- geneplot + geom_point(data = sel.genes.df, aes(x = x.mean, y=y.mean, fill = "Individual genes"), 
+                                                         shape = 23, size = 2.5)
+                     }
                    } else{
                      geneplot
                    }
                    
-                   #save(geneplot, file = "www/data/preloaded_plot.rds")
                    
+                   geneplot <- geneplot + scale_fill_discrete(name = "Selected data")
                    geneplot
                  })
   })
   
+  
+  # Render the plot
   output$gplot <- renderPlot({
-    #if(exists("main_plot()")) {
-      main_plot()
-    #}
+    
+    main_plot()
+    
   })
   
-  # ## Create a tool tip
-  # output$hover_info <- renderUI({
-  #   df <- base.df()
-  #   rownames(df) <- NULL
-  #   df <- df[,c(3, 1, 2)]
-  #   
-  #   hover < input$p_hover
-  #   point <- nearPoints(df, input$p_hover, threshold = 5, maxpoints = 1, addDist = TRUE)
-  #   
-  #   if (nrow(point) == 0) {
-  #     return (NULL)
-  #   }
-  #   
-  #   # calculate point position INSIDE the image as percent of total dimensions
-  #   # from left (horizontal) and from top (vertical)
-  #   left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
-  #   top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
-  #   
-  #   # calculate distance from left and bottom side of the picture in pixels
-  #   left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-  #   top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
-  #   
-  #   # create style property fot tooltip
-  #   # background color is set so tooltip is a bit transparent
-  #   # z-index is set so we are sure are tooltip will be on top
-  #   style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
-  #                   "left:", left_px + 2, "px; top:", top_px + 2, "px;")
-  #   
-  #   # actual tooltip created as wellPanel
-  #   wellPanel(
-  #     style = style,
-  #     p(HTML(paste0("<b> Gene: </b>", point$gene, "<br/>",
-  #                   "<b> Xmean: </b>", point$x.mean, "<br/>",
-  #                   "<b> Ymean: </b>", point$y.mean, "<br/>"#,
-  #                   #"<b> Distance from left: </b>", left_px, "<b>, from top: </b>", top_px
-  #                   )))
-  #   )
-  # })
-  # 
-  
-  #Reports on the number of genes in total being plotted
-  output$total.txt <- renderText({
+  # Return a table summarising the number of genes found
+  output$report_stats <- renderTable({
     total.genes <- nrow(base.df())
     
     
-    return(paste(total.genes, "total genes in the graph after filtering. Below, the top 10 closest genes to
-the clicked mouse position, arranged in order of nearest distance to furthest. To find a gene more accurately, use the Search Genes tab."))
+    if(!is.null(input$gene_search_ui) | !is.null(input$gene_paste_sel)){
+      sel.genes <- nrow(selected.genes())
+      
+    } else {
+      sel.genes <- as.integer(0)
+    }
+    
+    if(!input$goterm_select == "" | input$type_goterm == 1  & !input$goslim_select == ""){
+      if(is.null(goterm.genes()) == FALSE){
+        sel.goterm <- nrow(goterm.genes())
+        
+      } else {
+        sel.goterm <- as.integer(0)
+      }
+      
+    } else {
+      sel.goterm <- as.integer(0)
+    }
+    
+    report_df <- data.frame(
+      total.genes,
+      sel.genes,
+      sel.goterm
+    )
+    colnames(report_df) <- c("Total genes", "Individual genes selected", "Genes annotated with selected GO Term/Slim")
+    
+    return(report_df)
   })
+  
   
   #Returns the closest rows to the mouse hover
   output$info_plot <- renderPrint({
@@ -409,25 +390,14 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     rownames(df) <- NULL
     df <- df[,c(3, 1, 2)]
     nearPoints(df, input$plot_click, xvar = "x.mean", yvar = "y.mean", threshold = 10, 
-               maxpoints = 10)
+               maxpoints = 5)
   })
   
-  #Reports on the number of genes highlighted by the gene search widgets
-  output$sel.txt <- renderText({
-    sel.genes <- nrow(selected.genes())
-    
-    if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
-      
-      return(paste(sel.genes, "genes have been selected and highlighted in the current dataset. Selected
-                   genes are in orange."))
-    } 
-    
-  })
   
-  #Gives the output for the selected genes in a table.
+  # Gives the output for the individually selected genes in a table.
   output$sel.table <- renderTable({
     
-    if(!is.null(input$gene.search.sel) | !is.null(input$gene.paste.sel)){
+    if(!is.null(input$gene_search_ui) | !is.null(input$gene_paste_sel)){
       df <- selected.genes()
       rownames(df) <- NULL
       df$selected <- NULL
@@ -435,43 +405,14 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     } 
   })
   
-  
-  
-  #Reports the number of genes matching the GO Term
-  output$goterm.txt <- renderText({
-    
-    
-    if(!input$goterm.select == "" | input$type_goterm == 2  & !input$goslim.select == ""){
-      sel.goterm <- nrow(goterm.genes())
-      if(is.null(goterm.genes()) == FALSE){
-        return(paste(sel.goterm, "genes have been annotated with the selected GO term in the current 
-                         dataset. GOTerm annotated genes are blue."))
-      } else {
-        return(paste("0 genes have been annotated with the selected GO term in the current 
-                         dataset. GOTerm annotated genes are blue."))
-      }
-      
-    } else {
-      return(paste("0 genes have been annotated with the selected GO term in the current 
-                         dataset. GOTerm annotated genes are blue."))
-    }
-  })
-  
-  #Gives the output for the GO Term selected genes in a table.
-  # output$goterm.table <- renderTable({
-  #   if(!input$goterm.select == "" | input$type_goterm == 2 & !input$goslim.select == "" ){
-  #     df <- goterm.genes()
-  #     rownames(df) <- NULL
-  #     return(df)
-  #   }
-  # })
-  
+  # Returns a table of the genes that have been annotated with the GO Term or Go Slim of interest
   output$annotated_selected <- renderTable({
-    #df <- go_selected.gene()
+    
     df <- goterm.genes()
     return(df)
   })
   
+  # Save figure as a EPS file
   output$deps <- downloadHandler(
     filename = function(){
       paste0(input$file_name, ".eps")
@@ -480,6 +421,7 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
       ggsave(file)
     })
   
+  # Save figure as a PDF file
   output$dpdf <- downloadHandler(
     filename = function(){
       paste0(input$file_name, ".pdf")
@@ -487,7 +429,7 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     content = function(file) {
       ggsave(file)
     })
-  
+  # Save selected genes into a csv
   output$dsel <- downloadHandler(
     filename = function(){
       paste0(input$file_name, "selected.csv")
@@ -497,6 +439,7 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     })
   
   
+  # Save GO Term/Slim annotated genes into a csv 
   output$dgot <- downloadHandler(
     filename = function(){
       paste0(input$file_name, "goterm.csv")
@@ -504,8 +447,6 @@ the clicked mouse position, arranged in order of nearest distance to furthest. T
     content = function(file) {
       write.csv(goterm.genes(), file)
     })
-  
-  
   
 })
 
